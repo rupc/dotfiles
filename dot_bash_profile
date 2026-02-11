@@ -696,7 +696,9 @@ function AsbUpdateEtcHostFromAnsibleHosts() {
 
 AnsibleSetUp
 
-. "$HOME/.cargo/env"
+if [ -f "$HOME/.cargo/env" ]; then
+    source "$HOME/.cargo/env"
+fi
 
 function replacestring() {
     arg1=$1
@@ -720,8 +722,13 @@ function rolback_and_deploy() {
 
 }
 
-. /home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/bench-prep.sh
-. /home/jyr/go/src/github.com/rupc/fabric-benchmarks/fabric-samples/bench-network/scripts/cmd-shortcuts.sh
+if [ -f "/home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/bench-prep.sh" ]; then
+    source /home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/bench-prep.sh
+fi
+
+if [ -f "/home/jyr/go/src/github.com/rupc/fabric-benchmarks/fabric-samples/bench-network/scripts/cmd-shortcuts.sh" ]; then
+    source /home/jyr/go/src/github.com/rupc/fabric-benchmarks/fabric-samples/bench-network/scripts/cmd-shortcuts.sh
+fi
 
 function re() {
     while ! "$@"; do
