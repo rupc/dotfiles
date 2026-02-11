@@ -1,0 +1,730 @@
+#if [[ -f ~/.bashrc ]]; then
+##statements
+#source ~/.bashrc
+#fi
+function fzyv() {
+    vi $(find . | fzy)
+}
+export CDPATH=.:~:~/work
+# Find Current directory : No need to start with "./"
+PATH=$PATH:~/bin
+
+alias dockerown="sudo chown jyr /var/run/docker.sock"
+function dockersetup() {
+    sudo usermod -a -G docker $USER
+}
+
+alias cl="clear"
+alias ..="cd .."
+alias ..2="cd ../../"
+alias ..3="cd ../../.."
+alias ..4="cd ../../../.."
+alias ..5="cd ../../../../.."
+
+alias ...="cd ../.."
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+alias ......="cd ../../../../.."
+
+# if [ -n "$DISPLAY" -a "$TERM" == "xterm" ]; then
+# export TERM="xterm-256color"
+# fi
+# export TERM="xterm-256color"
+
+MAIN_EDITOR=nvim
+# MAIN_EDITOR=vim
+alias vi="$MAIN_EDITOR"
+alias vim="$MAIN_EDITOR"
+alias vimc="vim -c \"normal '0\""
+alias bashp="$MAIN_EDITOR ~/.bash_profile"
+alias bashrc="$MAIN_EDITOR ~/.bashrc"
+alias vimrc="$MAIN_EDITOR ~/.vimrc"
+alias vir="$MAIN_EDITOR ./README.md"
+alias cdinit="cd ~/initial-settings/"
+alias sob="source ~/.bash_profile"
+alias vis="vi *.cpp"
+alias ma="$MAIN_EDITOR Makefile"
+alias vimsl="vim -S ~/.vim/sessions/lasts.vim"
+#PYTHONPATH
+# export PYTHONPATH=$PYTHON:/home/jyr/google-cloud-sdk/platform/google_appengine
+alias makegotags="gotags -R -f tags -L *"
+
+# linux source location
+mylx=/usr/src/linux-source-4.4.0
+alias cdl="cd ${mylx}"
+alias cdlu="cdl && cd flexsc/user"
+alias cdlf="cdl && cd flexsc"
+alias cdxx="cdl && cd arch/x86"
+alias cdxe="cdl && cd arch/x86/entry/"
+alias visc="sudo vi $mylx/arch/x86/entry/syscalls/syscall_64.tbl"
+alias cdfl="cd work/proj/aos/"
+
+# Knowledge Base
+alias cdkb="cd ${HOME}/vimwiki/kbase"
+
+# Hyperledger Fabric locations
+alias cdfab="cd $GOPATH/src/github.com/hyperledger/fabric/"
+alias cdfabc="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/caliper-workspace"
+alias cdfabt="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network"
+alias cdfabs="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/"
+alias cdfabd="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/deploy/swarm"
+alias cdfabdp="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/deploy/swarm/production"
+alias cdfabdk="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/deploy/kubernetes"
+alias cdfabda="cd $GOPATH/src/github.com/hyperledger/fabric/speculator/production/deploy/ansible/playbooks"
+
+# alias cdfabc="cd $GOPATH/src/github.com/hyperledger/fabric-samples/fabcar/javascript"
+# alias cdfaba="cd $GOPATH/src/github.com/hyperledger/fabric/peer/audit"
+alias cdfabn="cd $GOPATH/src/github.com/hyperledger/fabric-sdk-node/"
+alias cdc="cd $GOPATH/src/github.com/hyperledger/caliper/"
+alias cdgo="cd $GOPATH/src/github.com/rupc/"
+
+alias cdwork="cd $GOPATH/src/github.com/rupc/audit/"
+alias cdevm="cd $GOPATH/src/github.com/rupc/evmtest/"
+alias cdeth="cd $GOPATH/src/github.com/rupc/go-ethereum/"
+alias compgeth="cd $GOPATH/src/github.com/rupc/go-ethereum/; make geth;"
+alias cdpoa="cd $GOPATH/src/github.com/rupc/eth-poa-devnet"
+alias ethinit="cd /home/jyr/go/src/github.com/rupc/eth-poa-devnet; ./init-genesis.sh"
+alias caleth="cd /home/jyr/work/caliper-benchmarks; ./run-ethereum.sh"
+
+function dockergena() {
+    (
+        cd /home/jyr/go/src/github.com/rupc/eth-poa-devnet/docker/
+        docker-compose -f docker-compose.yaml up -d
+    )
+    (
+        cd /home/jyr/go/src/github.com/rupc/narwhal/benchmark
+        docker-compose -f docker-compose.yaml up -d
+    )
+}
+
+alias cdnar="cd $HOME/work/facebooknarwhal/narwhal"
+# alias cdnar="cd $GOPATH/src/github.com/rupc/narwhal/benchmark"
+
+alias fablo="cd $HOME/work/narwhal-proj/sui/narwhal/benchmark; fab local;"
+alias cdgat="cd $HOME/work/narwhal-proj/gateway/"
+alias cdlot="cd /home/jyr/work/BlockLot"
+
+# alias cdfas="cd /home/jyr/go/src/github.com/rupc/fastbft/"
+
+# sudo privilege need
+function mk3() {
+    sudo make -j8
+    paplay /usr/share/sounds/gnome/default/alerts/bark.ogg
+    sudo make modules
+    sudo make modules_install
+    sudo make install
+    paplay /usr/share/sounds/gnome/default/alerts/sonar.ogg
+    sleep 5
+    reboot
+}
+
+function mk1() {
+    sudo make -j8
+}
+
+function mk2() {
+    sudo make -j8
+    sudo make install
+    echo "End of install"
+    sleep 1
+    reboot
+    # reboot
+}
+
+devMachineIP="141.223.121.31"
+devMachinePort="2377" # docker swarm port
+
+function docker_swarm_rejoin_node() {
+    hostname=$1
+    if [ -z "$hostname" ]; then
+        echo "hostname is empty"
+        return 0
+    fi
+
+    swarmToken=$(docker_swarm_get_token_worker)
+    echo "swarmToken: $swarmToken"
+    ansible "${hostname}" -m shell -a "docker swarm leave --force" -u root
+    # ansible "${hostname}" -m shell -a "timedatectl set-ntp on" -u root
+    ansible "${hostname}" -m shell -a "docker swarm join --token ${swarmToken} ${devMachineIP}:${devMachinePort}" -u root
+    # ansible "${hostname}" -m shell -a "timedatectl set-ntp off; timedatectl set-time '2021-10-26 19:31:40'" -u root
+}
+
+function docker_swarm_get_token_worker() {
+    docker swarm join-token worker | tr ' ' '\n' | grep SWMTKN
+}
+
+function docker_swarm_rejoin() {
+    set -x
+    down_nodes=$(docker node ls | grep Down | awk '{print $1}')
+    down_hosts=$(docker node ls | grep Down | awk '{print $2}')
+    echo "down nodes: $down_nodes"
+    echo "down hosts: $down_hosts"
+    echo "devMachineIP: $devMachineIP"
+    echo "swarmToken: $swarmToken"
+
+    swarmToken=$(docker swarm join-token worker | tr ' ' '\n' | grep SWMTKN)
+
+    for node in $down_nodes; do
+        docker node rm "${node}"
+    done
+
+    ansible "${down_hosts}" -m shell -a "docker swarm leave --force" -u root
+    # ansible "${down_hosts}" -m shell -a "timedatectl set-ntp on" -u root
+    ansible "${down_hosts}" -m shell -a "docker swarm join --token ${swarmToken} ${devMachineIP}:${devMachinePort}" -u root
+    # ansible "${down_hosts}" -m shell -a "timedatectl set-ntp off" -u root
+    # ansible "${down_hosts}" -m shell -a "timedatectl set-time '2021-10-26 19:31:40'" -u root
+    set +x
+}
+
+function restartDockerNetworkForLabTestbed() {
+    docker swarm leave --force
+
+    ansibleExprHosts="bspserver,bspauditor,bspclient"
+    ansibleMonitorHosts="monitor"
+    ansible ${ansibleExprHosts},${ansibleMonitorHosts} -m shell -a "docker swarm leave --force" -u root
+    # ansible ${ansibleExprHosts} -m shell -a "timedatectl set-ntp on" -u root
+
+    sleep 1
+    swarmToken=$(docker swarm init --advertise-addr=${devMachineIP} | tr ' ' '\n' | grep SWMTKN)
+
+    ansible ${ansibleExprHosts},${ansibleMonitorHosts} -m shell -a "docker swarm join --token ${swarmToken} ${devMachineIP}:${devMachinePort}" -u root
+    # ansible ${ansibleExprHosts} -m shell -a "timedatectl set-ntp off" -u root
+    # ansible ${ansibleExprHosts} -m shell -a "timedatectl set-time '2021-10-26 19:31:40'" -u root
+    #timedatectl set-ntp off && timedatectl set-time '2021-10-26 19:31:40'
+
+    maxnumShards=24
+    for ((i = 0; i < $maxnumShards; i++)); do
+        networkId="edgechain$i"
+        echo "creating overlay network $networkId"
+
+        subnetsize=22
+        subnet="10.$((i + 1)).0.0/$subnetsize" # 각 네트워크에 다른 서브넷 할당
+
+        # 네트워크 존재 확인 후 삭제
+        if docker network inspect $networkId >/dev/null 2>&1; then
+            docker network rm $networkId
+        fi
+
+        docker network create --driver=overlay --opt encrypted=false --attachable --subnet=$subnet $networkId
+    done
+
+    # Creating a higher-level chain network
+    docker network rm mec
+    docker network create --driver=overlay mec
+    docker network create --driver=overlay hlfcaliper
+    docker network create --driver=overlay --attachable bspbench
+
+    (
+        cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/deploy/swarm/production || exit
+        docker stack deploy --compose-file=production-monitor.yaml monitor
+        docker stack deploy --compose-file=production-etcd.yaml config
+    )
+}
+
+function mk() {
+    local kernel_location=/usr/src/linux-$(uname -r)
+    read -p "Want to copy .config in current system to $kernel_location/.config?(y/n)" yesno
+    if [ $yesno == "y" ]; then
+        sudo cp /boot/config-$(uname -r) $kernel_location/.config
+    elif [ $yesno == "n" ]; then
+        echo "New configuration file will be needed."
+    fi
+
+    echo "Number of CPU is $(nproc)"
+    echo "Start kernel compile at $(date)"
+    sudo make -j$(nproc)
+    echo "End of compiling kernel"
+    echo "End kernel compile at $(date)"
+    sudo make install
+    echo "End of installing kernel"
+
+    read -p "Want to execute grub-customizer?" yesno
+    if [ $yesno == "y" ]; then
+        if [ -z $(ls /usr/bin/grub-customizer) ]; then
+            echo "grub-customizer is not installed"
+            return -1
+        else
+            sudo grub-customizer
+        fi
+
+    fi
+
+    read -p "Want to reboot?" yesno
+    if [ $yesno == "y" ]; then
+        sudo reboot
+    fi
+    #make modules
+}
+
+function mkdircd() {
+    # 아하, 2번째 인자로 주어진 경로를 참조하기 위함이구나
+    mkdir -p "$@" && eval cd "\"\$$#\""
+}
+
+function nau() {
+    nautilus "$@"
+}
+
+# When using new environment
+function gitsetup() {
+    git config --global user.name 'rupc'
+    git config --global user.email 'neurosilver@gmail.com'
+    git config --global credential.helper store
+    git config --global alias.lgb "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --branches"
+    git config --global core.editor ${MAIN_EDITOR}
+
+}
+
+export PATH=$HOME/hbin:$PATH
+# source /home/jyr/.bashrc
+
+export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export GO111MODULE=on
+export PATH=$PATH:$GOPATH/bin
+export PATH=$PATH:/home/jyr/.local/bin
+
+# set GoPATH
+
+alias gettowork="cd /home/jyr/work/proj/broadcast/playground/maestro/ && ./start-devel.sh"
+export PATH="$PATH:/home/jyr/work/pintos-anon/src/utils"
+export PINTOS_ROOT="/home/jyr/work/pintos-anon"
+export KERNEL_ROOT="/home/jyr/work/pintos-anon"
+
+function dockerShortcuts() {
+    # Remove "All" docker containers.. Use this command carefully!
+    alias dvl="docker volume ls"
+    alias dvp="docker volume prune"
+    alias de="docker network ls"
+    alias docker_clean_images='docker rmi $(docker images -a --filter=dangling=true -q)'
+    alias docker_clean_ps='docker rm $(docker ps --filter=status=exited --filter=status=created -q)'
+    alias docker_clean_exit='docker rm $(docker ps -q -f status=exited)'
+
+    d() {
+        docker rm $(docker ps -aq) -f
+    }
+
+    rmdangle() {
+        docker rmi -f $(docker images -f "dangling=true" -q)
+    }
+
+    function dres() {
+        docker restart $(docker ps -aq)
+    }
+
+    alias s="docker ps -a"
+    alias i="docker images"
+    alias ia="docker images -a"
+
+    # swarm mode shortcuts
+    alias dnet="docker network ls"
+    alias dnl="docker node ls"
+    alias dl="docker service ls"
+    # alias dsl="docker service logs --no-task-ids -f"
+    alias tl="docker stack ls"
+    alias ts="docker stack ps"
+
+    function er12() {
+        echo "runs one (single) edgechain with 1 BSP, 12 auditors, 3 clients, of which, it subscribes to one auditor"
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --er12
+        )
+    }
+
+    # run all three edgechain components including bsp-orderer, bsp-executor, 4 bsp-auditors, three chains, so 18 containers
+    function er() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --All
+        )
+    }
+
+    # run bsp orderers in each edgechain only !
+    function eo() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --orderer
+        )
+    }
+
+    # run bsp orderer and executors in each edgechain only
+    function eb() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --bsp
+        )
+    }
+
+    function e0() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --edgechain0
+        )
+    }
+    function e1() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --edgechain1
+        )
+    }
+    function e2() {
+        (
+            cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker
+            ./run-edgechains.sh --edgechain2
+        )
+    }
+}
+
+gitShortcuts() {
+    alias gitlatesthash="echo $(git log --pretty=format:'%h' -n 1)"
+}
+
+# build_benchserver() {
+#     set -x
+#     echo "build benchserver"
+#     (cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/benchserver; ./build.sh)
+#     (cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/deploy/swarm/production; docker stack deploy --compose-file production-benchserver.yaml bench)
+#     # sleep 5
+#     set +x
+# }
+# Ultimate magic commands, including compile, builds, container pull/push, ansible initialization, deploy over swarms
+# ee() {
+#     # (cd /home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/benchserver; ./build.sh)
+#     benchconfig_path="/home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/benchserver/benchconfig.yaml"
+#     export NUM_SHARDS=$(grep "NumShards:" ${benchconfig_path} | awk '{print $2}')
+#     echo "NUM_SHARDS: $NUM_SHARDS"
+
+#     # Prepare preliminaries
+#     build_benchserver &
+#     p
+#     o
+#     wait
+#     echo "parallel completed."
+
+#     anr $NUM_SHARDS  # rollback chain
+#     ans  # distribute updated conatiners
+#     deployBSPOverTestbed $NUM_SHARDS
+# }
+dockerShortcuts
+gitShortcuts
+
+function repeat() {
+    number=$1
+    shift
+    for i in $(seq $number); do
+        $@
+    done
+}
+alias clip="xclip -selection clipboard"
+
+# export PYTHONPATH="${PYTHONPATH}:/usr/local/lib/python3.6/dist-packages:/usr/lib/python3.6:/usr/lib/python3/dist-packages"
+
+# Git-specific shortcuts
+# awk '{print $2;}'
+alias gs="git status -s | grep ^.M | awk '{print \$2;}'"
+alias gsco="git status -s | grep ^.M | awk '{print \$2;}' | fzy | xargs -I {} git checkout -- {}"
+
+alias gl="git log"
+alias glp="git log -p --oneline"
+alias gd="git diff"
+# alias gpom="git push devel main"
+alias gpom="git push origin main"
+alias gpoms="git push origin master"
+alias gr="git remote -v"
+alias vig="${MAIN_EDITOR} .gitignore" # Edit .gitignore
+alias ga="git stash"
+
+# awk shortcut
+function ak() {
+    #function_body
+    cmd="awk '{print \$$1;}'"
+    eval $cmd
+    # awk {'print $1;'}
+}
+
+export PATH=$PATH:"/home/jyr/pintos-proj3-starter/pintos/pintos/src/utils"
+
+alias hosts="cat /etc/hosts"
+
+alias jtags="ctags -R app config lib && sed -i '' -E '/^(if|switch|function|module\.exports|it|describe).+language:js$/d' tags"
+
+# Docker run prometheus shortcuts
+PROM_CONFIG_PATH="/home/jyr/work/proj/prom/config/"
+PROM_CONFIG_FILENAME="prometheus.yml"
+PROM_DOCKER_IMAGENAME="prom/prometheus"
+PROM_DOCKER_PORT="9090:9090"
+alias prom="docker run -p $PROM_DOCKER_PORT -v $PROM_CONFIG_PATH/$PROM_CONFIG_FILENAME:/etc/prometheus/prometheus.yml $PROM_DOCKER_IMAGENAME"
+
+alias mip="ifconfig | grep -i enp -A 2 | grep -i inet"
+
+function bashrc_color() {
+    # set a fancy prompt (non-color, unless we know we "want" color)
+    case "$TERM" in
+    xterm-color | *-256color) color_prompt=yes ;;
+    esac
+
+    # uncomment for a colored prompt, if the terminal has the capability; turned
+    # off by default to not distract the user: the focus in a terminal window
+    # should be on the output of commands, not on the prompt
+    #force_color_prompt=yes
+
+    if [ -n "$force_color_prompt" ]; then
+        if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+            # We have color support; assume it's compliant with Ecma-48
+            # (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+            # a case would tend to support setf rather than setaf.)
+            color_prompt=yes
+        else
+            color_prompt=
+        fi
+    fi
+
+    if [ "$color_prompt" = yes ]; then
+        PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+    else
+        PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+    fi
+    unset color_prompt force_color_prompt
+
+    # If this is an xterm set the title to user@host:dir
+    case "$TERM" in
+    xterm* | rxvt*)
+        PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+        ;;
+    *) ;;
+    esac
+
+    # enable color support of ls and also add handy aliases
+    if [ -x /usr/bin/dircolors ]; then
+        test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+        alias ls='ls --color=auto'
+        #alias dir='dir --color=auto'
+        #alias vdir='vdir --color=auto'
+
+        alias grep='grep --color=auto'
+        alias fgrep='fgrep --color=auto'
+        alias egrep='egrep --color=auto'
+    fi
+
+    # enable programmable completion features (you don't need to enable
+    # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+    # sources /etc/bash.bashrc).
+    if ! shopt -oq posix; then
+        if [ -f /usr/share/bash-completion/bash_completion ]; then
+            . /usr/share/bash-completion/bash_completion
+        elif [ -f /etc/bash_completion ]; then
+            . /etc/bash_completion
+        fi
+    fi
+    alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+    alias ll='ls -alF'
+    alias la='ls -A'
+    alias l='ls -CF'
+
+}
+
+# bashrc_color
+
+# NodeJs Configuration
+nodeVersion="v8.11.4"
+nodePlatform="linux-x64"
+nodePath="$HOME/node-$nodeVersion-$nodePlatform"
+nodeBinPath="$nodePath/bin/"
+alias cdnode="cd $nodePath"
+export PATH=$PATH:"$nodeBinPath"
+
+# alias python3="python3.6"
+# alias python="python3.6"
+# alias pip="pip3"
+
+function tarxz() {
+    tar cfJ $1.tar.xz $1
+}
+
+# Usage: nodetags module_1 module_2 ...
+# Why was I using this ???
+function nodetags() {
+    modules=()
+    for m in $*; do
+        modules+=(node_modules/$m)
+    done
+    echo "Including ${modules[@]}..."
+
+    echo "Create tags for js in a root project"
+    find . -type f -iregex ".*\.js$" -not -path "./node_modules/*" -exec jsctags {} -f \; | sed '/^$/d' | LANG=C sort >tags
+    echo "Create tags for js in " ${modules[@]}
+    find "${modules[@]}" -type f -iregex ".*\.js$" -exec jsctags {} -f \; | sed '/^$/d' >>tags
+}
+
+network_path="/home/jyr/go/src/github.com/hyperledger/caliper/packages/caliper-expr"
+targetPeer="peer0.org1.example.com"
+
+# # restart targetPeer only, it is used for testing ascc because rebooting a peer will reload a newly built ascc
+# function sdk_peer0() {
+#     (cd $network_path; docker-compose -f network/fabric-v1.4.1/raft/production.yaml up -d --no-deps --build $targetPeer)
+# }
+
+# function sdk_peer0_rm() {
+#     (docker rm -f $targetPeer)
+# }
+
+# i think this can restart containers
+docker-compose-restart() {
+    docker-compose stop $@
+    docker-compose rm -f -v $@
+    docker-compose create --force-recreate $@
+    docker-compose start $@
+}
+
+function pc() {
+    (
+        cd /home/jyr/go/src/github.com/hyperledger/fabric
+        make peerd -B
+    )
+
+    docker ps -a | grep "dev-peer" | awk '{print $1}' | xargs docker rm -f
+    docker images | grep "dev-peer" | awk '{print $3}' | xargs docker rmi -f
+
+    peers=(peer0.org1.example.com)
+    # peers=(peer0.org1.example.com peer1.org1.example.com peer2.org1.example.com peer3.org1.example.com peer4.org1.example.com)
+
+    for p in ${peers[@]}; do
+        docker rm -f ${p}
+    done
+
+    # docker rm -f peer0.org2.example.com
+    prefix="/home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/"
+    envFile=$prefix.env
+    # docker-compose --env-file $envFile -f /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate peer0.org1.example.com
+    docker-compose --env-file $envFile -f /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate peer0.org1.example.com peer1.org1.example.com peer2.org1.example.com peer3.org1.example.com peer4.org1.example.com
+    # docker-compose --env-file $envFile -f /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate peer1.org1.example.com
+
+    # docker-compose -f /home/jyr/go/src/github.com/hyperledger/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate peer0.org1.example.com peer0.org2.example.com
+}
+
+function morepeer4() {
+    prefix="/home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/"
+    envFile=$prefix.env
+    docker-compose --env-file $envFile -f /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/more-peers-4.yaml up -d --no-deps --build --force-recreate
+}
+
+function ocpc() {
+    oc
+    pc
+}
+
+function rc() {
+    set -x
+    workspaceDir="/home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/caliper-workspace"
+    # (cd $workspaceDir; npx caliper launch manager --caliper-workspace $workspaceDir --caliper-networkconfig networks/networkConfig.json --caliper-benchconfig benchmarks/fabcarBenchmark.yaml --caliper-flow-only-test --caliper-fabric-gateway-enabled)
+    # Disable gateway-discovery lol
+    # (cd $workspaceDir; npx caliper launch manager --caliper-workspace $workspaceDir --caliper-networkconfig networks/networkConfig.json --caliper-benchconfig benchmarks/smallbankBenchmark.yaml --caliper-flow-only-test --caliper-fabric-gateway-enabled)
+    (
+        cd $workspaceDir
+        npx caliper launch manager --caliper-workspace $workspaceDir --caliper-networkconfig networks/networkConfig.yaml --caliper-benchconfig benchmarks/smallbankBenchmark.yaml --caliper-flow-only-test --caliper-fabric-gateway-enabled
+    )
+    set +x
+}
+
+# Restart orderer with new updated image
+function oc() {
+    (
+        cd /home/jyr/go/src/github.com/hyperledger/fabric
+        make ordererd -B
+    )
+    prefix="/home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/"
+    envFile=$prefix.env
+    docker-compose --env-file $envFile -f /home/jyr/go/src/github.com/hyperledger/fabric/speculator/production/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate orderer.example.com
+}
+
+function rccenv() {
+    docker ps -a | grep ccenv | awk '{print }' | xargs docker rm
+}
+
+# Awesome bash airline
+# source /home/jyr/.shell_prompt.sh
+# shell_prompt
+
+# deploypeerd should run at hf-fabric root directory
+function deploypeerd() {
+    # set -e
+    make peerd -Bj
+    docker save peerd >peerd.img
+    scp -P 2200 ./peerd.img jyr@141.223.121.50:/home/jyr/go/src/github.com/hyperledger/fabric-samples/test-network/docker/custom-images/
+    ssh jyr@141.223.121.50 -p 2200 "cd /home/jyr/go/src/github.com/hyperledger/fabric-samples/test-network/docker/custom-images; docker load -i peerd.img; docker-compose -f /home/jyr/go/src/github.com/hyperledger/fabric-samples/test-network/docker/docker-compose-test-net.yaml up -d --no-deps --build --force-recreate peer0.org1.example.com peer0.org2.example.com "
+    rm peerd.img
+}
+
+# counterfeiter examples
+# counterfeiter --fake-name PeerLedger -o fake/fakepeerledger.go ../core/ledger PeerLedger
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"                   # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" # This loads nvm bash_completion
+
+function AnsibleSetUp() {
+    alias anhost="$MAIN_EDITOR /etc/ansible/hosts"
+    alias anping="ansible all -m ping -u root"
+    alias catanh="cat /etc/ansible/hosts"
+}
+
+function AsbUpdateEtcHostFromAnsibleHosts() {
+    ANSIBLE_HOSTS_FILE=/etc/ansible/hosts
+
+    # Iterate through the Ansible hosts file
+    while IFS= read -r line; do
+        # Ignore lines that start with "#"
+        if [[ $line =~ ^# ]]; then
+            continue
+        fi
+
+        # Check if the line contains "ansible_host=" (indicating an IP address)
+        if [[ $line =~ ansible_host= ]]; then
+            # Extract the IP address after "ansible_host="
+            ip=$(echo $line | sed -n 's/.*ansible_host=\([0-9\.]*\).*/\1/p')
+
+            # Extract the hostname, assuming it's at the beginning of the line
+            host=$(echo $line | cut -d' ' -f 1)
+
+            # Append to /etc/hosts (with sudo)
+            echo "$ip $host" | sudo tee -a /etc/hosts
+        fi
+    done <"$ANSIBLE_HOSTS_FILE"
+
+}
+
+AnsibleSetUp
+
+. "$HOME/.cargo/env"
+
+function replacestring() {
+    arg1=$1
+    arg2=$2
+    # find . -type f -exec sed -i 's/141\.223\.121\.45/141.223.121.31/g' {} +
+    # ag -l "141\.223\.121\.45" | xargs sed -i 's/141\.223\.121\.45/141.223.121.31/g'
+    # rg -l -P "141\.223\.121\.45" | xargs sed -i 's/141\.223\.121\.45/141.223.121.31/g'
+
+}
+
+# make this directory including its sub directories mine, recusrively
+function makethingsmine() {
+    sudo chown -R $(whoami) . && sudo chgrp -R $(whoami) .
+}
+
+function rolback_and_deploy() {
+    (
+        cd /home/jyr/go/src/github.com/rupc/fabric-benchmarks/fabric-samples/bench-network/deployment
+        ansible-playbook -f 8 ansible/sync-hlf.yaml -u root && ./swarm-deploy.py
+    )
+
+}
+
+. /home/jyr/go/src/github.com/hyperledger/fabric/speculator/benchmarks/bench-prep.sh
+. /home/jyr/go/src/github.com/rupc/fabric-benchmarks/fabric-samples/bench-network/scripts/cmd-shortcuts.sh
+
+function re() {
+    while ! "$@"; do
+        sleep 1
+    done
+}

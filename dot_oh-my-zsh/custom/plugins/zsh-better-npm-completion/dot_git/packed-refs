@@ -1,0 +1,3 @@
+# pack-refs with: peeled fully-peeled sorted 
+0a7cf042415324ec38a186fdcbc9af163f0d7e69 refs/remotes/origin/master
+778b760b37dda9b454f15684128632500225b0c2 refs/remotes/origin/uninstall-completion

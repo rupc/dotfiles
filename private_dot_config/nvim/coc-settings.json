@@ -1,0 +1,20 @@
+{
+  "coc.preferences.diagnostic.displayByAle": false,
+  "coc.preferences.diagnostic.showUnused": false,
+  "coc.preferences.promptWorkspaceEdit": "location",
+  "coc.preferences.diagnostic.enableMessage": false,
+  "coc.preferences.diagnostic.enableSign": false,
+  "rust-analyzer.enable": true,
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "suggest.detailField": "abbr",
+  "coc.preferences.formatOnSaveFiletypes": ["markdown", "rust"],
+  "languageserver": {
+      "golang": {
+          "command": "gopls",
+          "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
+          "filetypes": ["go"]
+      }
+  }
+}
+
+

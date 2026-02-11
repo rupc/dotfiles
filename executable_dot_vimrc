@@ -1,0 +1,1367 @@
+" full file name with directory and extension
+let fullname=expand('%:p')
+" filename without extension
+let filename=expand('%:t:r')
+" file extension
+let extension=expand('%:e')
+let parent_dir=expand('%:p:h:t')
+
+
+if has('python3')
+    set pyx=3
+    set pyxversion=3
+elseif has('pythonx')
+    set pyx=2
+    set pyxversion=2
+endif
+
+function! ReplaceCurrentWordWith(newWord)
+    let cmd=':%s/\<'.expand('<cword>').'\>/'.a:newWord.'/g'
+    execute cmd
+    " command! '%s/\<'.expand('<cword>').'\>/'.a:newWord.'/g<cr>'
+endfunction
+
+
+" Copy current working file to clipboard
+function! CopyWorkingDirectoryFileToClipboard() 
+    let @+ = expand('%:p')
+    echo "Copied ".expand('%:p')." to system clipboard!"
+endfunction
+command! CopyBuffer let @+ = expand('%:p')
+nnoremap <leader>dc :call CopyWorkingDirectoryFileToClipboard()<cr>
+
+
+function! SetCurrentWorkingFiles() 
+    " full file name with directory and extension
+    let g:fullname=expand('%:p')
+    " filename without extension
+    let g:filename=expand('%:t:r')
+    " file extension
+    let g:extension=expand('%:e')
+    let g:parent_dir=expand('%:p:h:t')
+endfunction
+
+" Reopen last open in split
+nmap <c-s-t> :vs<bar>:b#<CR>
+vnoremap <leader>" Xa""<esc>P
+
+
+" nnoremap <a-i><a-2> :bu 2<cr>
+" nnoremap <a-i><a-3> :bu 3<cr>
+" nnoremap <a-i><a-4> :bu 4<cr>
+" nnoremap <a-i><a-5> :bu 5<cr>
+" nnoremap <a-i><a-6> :bu 6<cr>
+" nnoremap <a-i><a-7> :bu 7<cr>
+" nnoremap <a-i><a-8> :bu 8<cr>
+" nnoremap <a-i><a-9> :bu 9<cr>
+" nnoremap <a-i><a-0> :bu 0<cr>
+
+nmap <S-UP> V
+nmap <S-DOWN> V
+vmap <S-UP> k
+vmap <S-DOWN> j
+
+nmap <S-LEFT> v
+nmap <S-RIGHT> v
+vmap <S-RIGHT> l
+vmap <S-LEFT> h
+
+nnoremap <space>p "+p
+
+" vimgrep
+" http://stackoverflow.com/questions/7880372/how-to-jump-between-patterns-when-using-vimgrep-quickfix-list
+nnoremap <a-[> :cprevious<cr>
+nnoremap <a-]> :cnext<cr>
+" :cnfile, :cpfile, :crewind, :clast, :colder, c:newer
+
+
+
+" -----------------------------------------------------------------------------
+" Latex configurations
+function! LaTexConfigure()
+    " Compile and View Latex documents
+    nnoremap <leader>rr :call LaTeXRun(fullname)<cr>
+    " View Latex documents with evince
+    nnoremap <leader>rv :call LaTeXViewDocument(fullname)<cr>
+    " Compile latex documents
+    nnoremap <leader>rc :call LaTeXCompile(fullname)<cr>
+    nnoremap <leader><leader> :call LaTeXCompile(fullname)<cr>
+    autocmd BufEnter *.tex call SetCurrentWorkingFiles()|set syntax=tex
+endfunction
+autocmd Filetype tex call LaTexConfigure()
+" LaTeX Settings
+" global variable prefixed by g:
+function! LaTeXRun(file)
+    let dvifile=g:filename.".dvi"
+    " let cmd = "!latex ".a:file." && "."xdvi ".dvifile. " -s 3"
+    let pdffile=g:filename.".pdf"
+    let cmd = "!pdflatex ".a:file." && "."evince ".pdffile
+    execute cmd
+endfunction
+
+function! LaTeXCompile(file)
+    let dvifile=g:filename.".dvi"
+    let cmd = "!pdflatex ".a:file
+    execute cmd
+endfunction
+
+function! LaTeXViewDocument(file)
+    let pdffile=g:filename.".pdf"
+    let cmd = "!evince ".pdffile." &"
+    execute cmd
+endfunction
+" -----------------------------------------------------------------------------
+
+
+" -----------------------------------------------------------------------------
+
+" Close hotfix window
+nnoremap <leader>hc :ccl<cr>
+" Open hotfix window
+nnoremap <leader>ho :copen<cr>
+
+function! VimGoConfigure()
+    let g:go_fmt_autosave = 1
+    let g:go_fmt_command = "goimports"
+    let g:go_highlight_types = 1
+    let g:go_def_mode='gopls'
+    set autowrite
+    map <leader>b :GoBuild<cr>
+    map <leader>r :GoRun<cr>
+
+    " Find
+    map <leader>fr :GoReferrers<cr>
+    map <leader>tt :GoTest<cr>
+    "
+    " Test current cursor position func. only
+    map <leader>tf :GoTestFunc<cr> 
+    map <leader>tc :GoTestCompile<cr>
+    map <leader>tg :!ginkgo<cr>
+
+    " Go coverage
+    map <leader>gv :GoCoverage<cr>
+    map <leader>gc :GoCoverageClear<cr>
+    map <leader>gt :GoCoverageToggle<cr>
+    map <leader>gb :GoCoverageBrowser<cr>
+
+    " Go navigation
+    map <leader>ff :GoAlternate<cr>
+    map <leader>fd :GoDecls<cr>
+    map <leader>fe :GoDeclsDir<cr>
+
+
+    command! -bang A call go#alternate#Switch(<bang>0, 'edit')
+    command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
+    command! -bang AS call go#alternate#Switch(<bang>0, 'split')
+    command! -bang AT call go#alternate#Switch(<bang>0, 'tabe')
+
+    " let g:go_auto_sameids = 1
+    " let g:go_auto_type_info = 1
+    map <leader>ga :GoAddTags<cr>
+    map <leader>gm :GoRemoveTags<cr>
+    " au filetype go inoremap <buffer> . .<C-x><C-o>
+    " SerialExperimentsLain is the best for GoLang
+    " colorscheme SerialExperimentsLain 
+
+endfunction
+" -----------------------------------------------------------------------------
+
+
+
+
+" -----------------------------------------------------------------------------
+
+let project_folder_name="xx"
+let makefile_location="./"
+let kernel_location="/usr/src/linux-headers-4.4.0-57/"
+
+function! MoveToKernel(loc)
+    let cmd="sp ".a:loc
+    execute cmd
+endfunction
+
+
+" nnoremap <leader>gkh :call MoveToKernel(kernel_location)<cr>
+
+
+" Resize window by 1 row
+nnoremap <a-p> :res +1<cr>
+nnoremap <a-n> :res -1<cr>
+" inoremap <c-a> <esc>I
+" inoremap <c-e> <esc>A
+"set linespace
+" project specific command first
+" /
+" Slice Definition ex) void display() {
+nnoremap <leader>sd ^v%y
+nnoremap <leader>mg :e ~/work/algorithms/graph/graph.cpp<cr>
+" Open Graph header
+nnoremap <leader>mh :e ~/work/algorithms/graph/inc/graph.h<cr>
+let incdir="~/work/algorithms/graph/inc"
+" single file compile and run
+"nmap <F4> :!g++ -std=c++14 % -o %< && ./%<<cr>
+
+set t_Co=256
+set background=dark
+highlight CursorLineNr term=bold ctermfg=202 gui=bold guifg=green
+highlight LineNr ctermfg=94 ctermbg=232
+
+" macro highlight
+"syn match defined '\v\w@<!(\u|_+[A-Z0-9])[A-Z0-9_]*\w@!'
+"hi def link defined Type
+" When in gVim, font needs to be changed
+
+nnoremap <leader>p "+p
+nnoremap <leader>P "+P
+if has('gui_running')
+    "set guifont=WenQuanYi\ Micro\ Hei\ Mono\ 16
+    set guifont=Dejavu\ Sans\ Mono\ 16
+    "set guifont=Consolas\ 16
+    
+    "set guifont=Consolas
+    set guioptions-=m " remove menubar
+    set guioptions-=T " remove toolbar
+    set guioptions-=r  "remove right-hand scroll bar
+    set guioptions-=L  "remove left-hand scroll bar
+    " gui specific keystroke
+    " inoremap <c-enter> <esc>o
+    nnoremap <c-down> 8j
+    nnoremap <c-up> 8k
+    colorscheme dracula
+endif
+
+" cursor color setting
+" if &term =~ "xterm\\|rxvt"
+    " use an orange cursor in insert mode
+    " let &t_SI = "\<Esc>]12;orange\x7"
+    " use a red cursor otherwise
+    " let &t_EI = "\<Esc>]12;green\x7"
+    " silent !echo -ne "\033]12;green\007"
+    " reset cursor when vim exits
+    " autocmd VimLeave * silent !echo -ne "\033]112\007"
+    " use \003]12;gray\007 for gnome-terminal and rxvt up to version 9.21
+" endif
+
+" if $TERM == "xterm-256color"
+  " set t_Co=256
+" endif
+
+
+nnoremap <leader>xx :!chmod +x % &<cr>l<cr>
+
+"hot key section
+"esc 안 쓸 거임... 손가락 위로 옮기기 귀찮음. 
+inoremap jk <esc> 
+inoremap kj <esc>l
+"use mouse
+" Don't need redundant swap file. It's angry
+set noswapfile
+set mouse=a
+let mapleader = ","
+
+" Git command shortcut
+nnoremap <leader>gc :Gpush origin master<cr>
+nnoremap <leader>gs :Gstatus<cr>
+" Load Vimrc 
+nnoremap <leader>lv :source $MYVIMRC<cr>
+" Edit Vimrc without losing concentration 
+nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+" want F9 key to be toggling .vimrc window not adding it
+nnoremap <F9> :vs ~/.vimrc<cr>
+" edit snippets
+
+function! EditSnippets(name)
+    echo a:name
+    let open_snippet=":vsplit ~/.vim/bundle/vim-snippets/snippets/".a:name.".snippets"
+    execute open_snippet
+endfunction
+
+nnoremap <leader>snla :call EditSnippets("tex")<cr><space>
+nnoremap <leader>sncpp :call EditSnippets("cpp")<cr><space>
+nnoremap <leader>sncc :call EditSnippets("c")<cr><space>
+nnoremap <leader>snja :call EditSnippets("java")<cr><space>
+nnoremap <leader>snhtml :call EditSnippets("html")<cr><space>
+nnoremap <leader>snjs :call EditSnippets("javascript")<cr><space>
+nnoremap <leader>snpy :call EditSnippets("python")<cr><space>
+nnoremap <leader>snbash :call EditSnippets("sh")<cr><space>
+nnoremap <leader>sngo :call EditSnippets("go")<cr><space>
+
+
+
+" Delete line without linebreak
+" nnoremap <leader>d 0D
+"nnoremap <leader>r
+" H, L : first, end of the line
+nnoremap H ^
+nnoremap L $
+" natural movement between split window
+nnoremap <m-h> <c-w><c-h>
+nnoremap <m-j> <c-w><c-j>
+nnoremap <m-k> <c-w><c-k>
+nnoremap <m-l> <c-w><c-l>
+nnoremap <m-q> :q<cr>
+" tab related mapping like web borwser
+nnoremap <c-tab> :tabprevious<cr>
+nnoremap <c-s-tab> :tabprevious<cr>
+nnoremap <c-tab> :tabnext<cr>
+" nnoremap <c-t> :tabnew<cr>
+nnoremap <c-u> :tabnext<cr>
+nnoremap <c-d> :tabprevious<cr>
+inoremap <c-s-tab> <esc>:tabprevious<cr>i
+inoremap <c-tab> <esc>:tabnext<cr>i
+" inoremap <c-t> <esc>:tabnew<cr>
+nnoremap <a-left>  :-tabmove<cr>
+nnoremap <a-right> :+tabmove<cr>
+
+" space when normal mode
+"nnoremap <space> i <esc>
+" delete all lines
+nnoremap <leader>D :%d<cr>
+
+" System Clipboard configurations.
+" Note register '*' is  system-wide clipboard for nvim, while '+' is the one for vim
+" copy to and from system clipboard
+nnoremap <leader>al ggvG"+y``
+vnoremap <leader>yc "+y
+" vnoremap <c-y> "+y
+" most natural, in visual mode, ctrl+c copies visual block to system clipboard
+vnoremap <c-c> "*Y
+nnoremap <leader>cp "+p
+" copy visualized lines into clipboard
+vnoremap <leader>aa "+y
+" copy current line
+nnoremap <leader>am ^v$"+y
+
+nnoremap <silent> <space> :nohlsearch<bar>:echo<cr>
+" insert double, single quatation, parenthesis
+" nnoremap <leader>" viw<esc>a"<esc>hbi"<esc>lel
+nnoremap <leader>"" viw<esc>a"<esc>hbi"<esc>lel
+nnoremap <leader>'' viw<esc>a'<esc>hbi'<esc>lel
+nnoremap <leader>(( viw<esc>a)<esc>hbi(<esc>lel
+" insert double quatation between '(', ) 
+nnoremap <leader>(" vi(<esc>a"<esc>%a"<esc>
+" transform a word to $(word). Often used in  Makefile or shell script
+nnoremap <leader>$$ viw<esc>a)<esc>hbi$(<esc>lel
+
+" reindent all lines
+nnoremap <leader>zz gg=G``
+" copy a word
+"nnoremap <leader>d vawy
+" paste and auto indent
+" quit, write file
+nnoremap <leader><space><space> :w!<cr>
+" Old habbit
+" nnoremap <leader>wf :w!<cr>
+
+nnoremap <leader>q :q<cr>
+" Save all file and quit
+nnoremap <leader>Q :qa!<cr>
+
+" Save all file and keep working
+nnoremap <leader>W :wa<cr>:echo "Save all files and keep working"<cr>
+nnoremap <leader>. :w<cr>
+
+" mimic Ctrl + d : delete current line like a sublime text
+"inoremap <c-k> <esc>ddi
+" - move down line by one
+nnoremap - ddp
+" vnoremap - dp
+" + move up line by one
+nnoremap + ddkP
+" vnoremap + dkP
+nnoremap <cr> i<cr><esc>l
+" open file in new tab at cursor pos
+nnoremap <leader>nt <c-w>gf
+"nnoremap j gj
+"nnoremap k gk
+
+""" Configure cursor move management
+" 8 movements at once
+nnoremap <c-j> 8j
+nnoremap <c-k> 8k
+nnoremap <c-h> 8h
+nnoremap <c-l> 8l
+
+vnoremap <c-j> 8j
+vnoremap <c-k> 8k
+vnoremap <c-h> 8h
+vnoremap <c-l> 8l
+
+" L, H : move cursor to both ends
+vnoremap L $
+vnoremap H ^
+
+
+""" Configure Buffer management
+" Focus on previous buffer
+" nnoremap <a-j> :MBEbp<cr>
+" Focus on next buffer
+" nnoremap <a-k> :MBEbn<cr>
+nnoremap <space>1 :buffer 1<cr>
+nnoremap <space>2 :buffer 2<cr>
+nnoremap <space>3 :buffer 3<cr>
+nnoremap <space>4 :buffer 4<cr>
+nnoremap <space>5 :buffer 5<cr>
+nnoremap <space>6 :buffer 6<cr>
+nnoremap <space>7 :buffer 7<cr>
+nnoremap <space>8 :buffer 8<cr>
+nnoremap <space>9 :buffer 9<cr>
+nnoremap <space>10 :buffer 10<cr>
+nnoremap <space>11 :buffer 11<cr>
+nnoremap <space>12 :buffer 12<cr>
+nnoremap <space>13 :buffer 13<cr>
+nnoremap <space>14 :buffer 14<cr>
+nnoremap <space>15 :buffer 15<cr>
+nnoremap <space>16 :buffer 16<cr>
+nnoremap <space>17 :buffer 17<cr>
+nnoremap <space>18 :buffer 18<cr>
+nnoremap <space>19 :buffer 19<cr>
+nnoremap <space>20 :buffer 20<cr>
+
+" ACM/ICPC problem shortcuts
+"nnoremap <leader>co :w<cr>:!./res<cr>
+nnoremap <leader>in :vs *.in<cr>
+
+" buffer is something that I didn't really used normally
+"buffer shortcuts
+"show next buffer
+nnoremap <a-z> :bp<cr>
+nnoremap <a-x> :bn<cr>
+" nnoremap <leader>bt :bufdo tab split<cr>
+" nnoremap <leader>bl :buffers<cr>
+"move next/prev buffer
+" nnoremap <leader>bn :bn<cr>
+" nnoremap <leader>bp :bp<cr>
+" nnoremap <leader>bb :buffers<cr>:buffer<space>
+nnoremap <leader>gg :e#<cr>
+nnoremap <leader>1 :1b<cr>
+nnoremap <leader>2 :2b<cr>
+nnoremap <leader>3 :3b<cr>
+nnoremap <leader>4 :4b<cr>
+nnoremap <leader>5 :5b<cr>
+nnoremap <leader>6 :6b<cr>
+nnoremap <leader>7 :7b<cr>
+nnoremap <leader>8 :8b<cr>
+nnoremap <leader>9 :9b<cr>
+nnoremap <leader>0 :10b<cr>
+
+" Edit Header file 
+nnoremap <leader>eh :vnew %:t:r.h<cr>
+
+" Make build configuration
+let mkloc = "." " Dependent on your proeject
+
+function! DoMakeEdit(loc)
+    let cmd=":tabnew ".a:loc."/Makefile"
+    execute cmd
+endfunction
+
+function! DoMakeCompile(loc) 
+    let makecmd=":!make -C ".a:loc." -j"
+    execute makecmd
+endfunction
+
+function! DoMakeRun(loc)
+    let makerun=":!make -C ".a:loc." run"
+    execute makerun
+endfunction
+
+function! DoMakeTargetS(loc)
+    let makecmd=":!make -C ".a:loc." server"
+    execute makecmd
+endfunction
+
+function! DoMakeCompileAndRun(loc)
+    call DoMakeCompile(a:loc)
+    call DoMakeRun(a:loc)
+endfunction
+
+
+" Edit Makefile given location
+nnoremap <leader>ma :call DoMakeEdit(mkloc)<cr>
+" Make & Make(Compile & Linking)
+nnoremap <leader>mm :call DoMakeCompile(mkloc)<cr>
+" Make & Run
+nnoremap <leader>mr :call DoMakeRun(mkloc)<cr>
+" Make & Clean
+nnoremap <leader>mc :make clean<cr>
+" Advance : Combination of Make Compile & Run
+nnoremap <leader>me :call DoMakeCompileAndRun(mkloc)<cr>
+nnoremap <leader>ms :call DoMakeTargetS(mkloc)<cr>
+
+
+" SET OPTION SECTION 
+set incsearch 
+set hlsearch "highlight search term"
+set splitright "open vertical window at right
+set splitbelow "open horizontal window at below
+
+set showmatch
+set wrap
+set ruler
+set title
+set number
+set relativenumber
+
+set autoindent
+set cindent
+set smartindent
+set smarttab
+set softtabstop=4                              
+set tabstop=4                                 
+set shiftwidth=4                             
+set expandtab                               
+" set paste option really sucks. Currently, I found out that imap, AutoComplPop didn't work :(
+" set paste
+set ignorecase  "case insensitive searching
+set smartcase   "but become case sensitive if you type uppercase characters
+" 세로 줄 하이라이팅
+let g:ToggleCursorLineStatus=1
+function! ToggleCursorLine()
+    if g:ToggleCursorLineStatus == 1
+        set nocursorline
+        set nocursorcolumn
+        let g:ToggleCursorLineStatus=0
+    else
+        set cursorline
+        set cursorcolumn
+        let g:ToggleCursorLineStatus=1
+    endif
+endfunction
+
+nnoremap <leader>ncl :call ToggleCursorLine()<cr>
+
+set cursorline
+set cursorcolumn
+let g:netrw_liststyle=3
+
+set more
+set hidden
+"folding settings
+set foldmethod=syntax   "fold based on indent
+set foldnestmax=10      "deepest fold is 10 levels
+set foldenable        "dont fold by default
+set foldlevel=1         "this is just what i use
+set nofoldenable
+
+set history=1000
+set showcmd     "show typed command in status bar
+set showmode    "show mode in status bar
+set wildmenu    "completion with menu
+set wildignore=*.o,*.obj,*.bak,*.exe,*.py[co],*.swp,*~,*.pyc,.svn
+
+set cmdheight=2
+set linebreak
+set backspace=indent,eol,start
+
+set scrolloff=3
+set sidescrolloff=7
+set sidescroll=1
+
+set nocompatible              " be iMproved, required
+set ai
+filetype on                  " required
+" VUNDLE SECTION
+set rtp+=~/.fzf
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+Plugin 'regedarek/ZoomWin'
+Plugin 'leafgarland/typescript-vim'
+Plugin 'majutsushi/tagbar'
+Plugin 'moll/vim-node'
+Plugin 'kien/ctrlp.vim'
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-surround'
+Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+Plugin 'dracula/vim'
+Plugin 'MarcWeber/vim-addon-mw-utils'
+" Plugin 'tomtom/tlib_vim'
+Plugin 'garbas/vim-snipmate' 
+Plugin 'honza/vim-snippets'
+" Plugin 'brookhong/cscope.vim'
+Plugin 'scrooloose/nerdcommenter'
+" Plugin 'fholgado/minibufexpl.vim'
+Plugin 'vimwiki/vimwiki'
+Plugin 'mattn/calendar-vim'
+" Plugin 'AutoComplPop'
+" Plugin 'ericcurtin/CurtineIncSw.vim' " switch header/source
+Plugin 'derekwyatt/vim-fswitch'
+
+" https://github.com/Shougo/deoplete.nvim
+" Plugin 'Shougo/deoplete.nvim'
+" Plugin 'roxma/nvim-yarp'
+" Plugin 'roxma/vim-hug-neovim-rpc'
+"
+" Go Plugins
+Plugin 'AndrewRadev/splitjoin.vim'
+" Plugin 'SirVer/ultisnips'
+
+" Plugin 'deoplete-plugins/deoplete-go', { 'do': 'make'}
+Plugin 'vim-syntastic/syntastic'
+" Plugin 'bling/vim-bufferline'
+" Plugin 'vim-airline/vim-airline'
+" Plugin 'vim-airline/vim-airline-themes'
+" Plugin 'edkolev/promptline.vim'
+Plugin 'mileszs/ack.vim'
+Plugin 'Lokaltog/vim-powerline'
+
+" Plugin 'Shougo/neocomplete'
+" Plugin 'Shougo/neosnippet'
+" Plugin 'Shougo/neosnippet-snippets'
+
+
+Plugin 'taglist.vim'
+Plugin 'kien/rainbow_parentheses.vim'
+Plugin 'Raimondi/delimitMate'
+Plugin 'terryma/vim-multiple-cursors'
+Plugin 'mattn/emmet-vim'
+Plugin 'vim-scripts/closetag.vim'
+Plugin 'The-NERD-tree'
+" Plugin 'jistr/vim-nerdtree-tabs'
+Plugin 'jalcine/cmake.vim'
+" Not working since v8.1
+" Plugin 'vim-utils/vim-alt-mappings'
+Plugin 'derekwyatt/vim-scala'
+Plugin 'craigemery/vim-autotag'
+Plugin 'alvan/vim-closetag'
+Plugin 'tpope/vim-tbone'
+Plugin 'artoj/qmake-syntax-vim'
+Plugin 'shirk/vim-gas'
+Plugin 'DoxygenToolkit.vim'
+Plugin 'vim-jp/vim-cpp'
+" Plugin 'Yggdroot/indentLine'
+"Plugin 'L9'
+"Plugin 'git://git.wincent.com/command-t.git'
+"Plugin 'ascenator/L9', {'name': 'newL9'}
+"Plugin 'artur-shaik/vim-javacomplete2'
+Plugin 'pangloss/vim-javascript' " It is so slow!!!
+" Plugin 'w0rp/ale'
+" Plugin 'gavocanov/vim-js-indent'
+" Awsome markdown real time view
+Plugin 'iamcco/markdown-preview.vim'
+" Plugin 'OmniCppComplete'
+"Plugin 'vim-ruby/vim-ruby'
+"Plugin 'tpope/vim-rails'
+" Make gvim-only colorschemes work transparently in terminal vim
+"Plugin 'JamshedVesuna/vim-markdown-preview'
+Plugin 'othree/html5.vim'
+"Plugin 'bling/vim-bufferline'
+"Plugin 'LucHermitte/vim-refactor'
+" keyword void not colored
+"Plugin 'vim-scripts/User-Defined-Type-Highlighter'
+" All of your Plugins must be added before the following line
+"
+Plugin 'antoyo/vim-licenses'
+" Plugin 'vim-scripts/syntaxm4.vim'
+
+" Plugin 'c.vim'
+
+Plugin 'lervag/vimtex'
+
+" let g:deoplete#enable_at_startup = 1
+" Python
+Plugin 'davidhalter/jedi-vim'
+Plugin 'pearofducks/ansible-vim'
+
+
+call vundle#end()            " required
+filetype plugin indent on    " required
+" set the runtime path to include Vundle and initialize
+" nnoremap <leader>vlugi :PluginInstall<cr>
+" Specify a directory for plugins
+" - For Neovim: stdpath('data') . '/plugged'
+" - Avoid using standard Vim directory names like 'plugin'
+call plug#begin('~/.vim/plugged')
+Plug 'ojroques/vim-oscyank'
+Plug 'vim-test/vim-test'
+Plug 'projekt0n/github-nvim-theme'
+Plug 'kaicataldo/material.vim', { 'branch': 'main' }
+
+" Plug 'ycm-core/YouCompleteMe'
+Plug 'tomlion/vim-solidity'
+Plug 'NLKNguyen/papercolor-theme'
+Plug 'autozimu/LanguageClient-neovim', {
+    \ 'branch': 'next',
+    \ 'do': 'bash install.sh',
+    \ }
+" Make sure you use single quotes
+" Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
+Plug 'junegunn/vim-easy-align'
+
+" Any valid git URL is allowed
+Plug 'https://github.com/junegunn/vim-github-dashboard.git'
+
+" Multiple Plug commands can be written in a single line using | separators
+" --> Bug founds when executing python
+Plug 'SirVer/ultisnips'
+
+" On-demand loading
+Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
+
+" Using a non-master branch
+Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+
+" Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" Plugin options
+Plug 'nsf/gocode', { 'tag': 'v.20150303', 'rtp': 'vim' }
+
+" Plugin outside ~/.vim/plugged with post-update hook
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'akinsho/toggleterm.nvim'
+
+
+Plug 'rust-lang/rust.vim'
+Plug 'lambdalisue/suda.vim'
+" Unmanaged plugin (manually installed and updated)
+" Plug '~/my-prototype-plugin'
+if has('nvim')
+  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+else
+  Plug 'Shougo/deoplete.nvim'
+  Plug 'roxma/nvim-yarp'
+  Plug 'roxma/vim-hug-neovim-rpc'
+endif
+" set guifont=DejaVu\ Sans\ Mono\ 12
+" Plug 'ryanoasis/vim-devicons'
+" Initialize plugin system
+"
+call plug#end()
+
+
+" let g:deoplete#enable_at_startup = 1
+
+nnoremap <leader>PI :PluginInstall<cr>
+let ruby_no_expensive=1
+" path to the chrome or the command to open chrome(or other modern browsers)
+let g:mkdp_path_to_chrome = "google-chrome"
+let g:mkdp_auto_start = 0
+" set to 1, the vim will open the preview window once enter the markdown
+" buffer
+let g:mkdp_auto_open = 0
+" set to 1, the vim will auto open preview window when you edit the
+" markdown file
+let g:mkdp_auto_close = 1
+" set to 1, the vim will auto close current preview window when change
+" from markdown buffer to another buffer
+let g:mkdp_refresh_slow = 0
+" set to 1, the vim will just refresh markdown when save the buffer or
+" leave from insert mode, default 0 is auto refresh markdown as you edit or
+" move the cursor
+let g:mkdp_command_for_global = 0
+" set to 1, the MarkdownPreview command can be use for all files,
+" by default it just can be use in markdown file
+
+let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
+" ctags config.
+"set tags=~/work/algorithms/graph/tags
+set tags=tags;tags;/
+
+func! Sts()
+    let st = expand("<cword>")
+    execute "sts ".st
+endfunc
+nnoremap <leader>st :call Sts()<cr>
+
+function! Tj()
+    let st = expand("<cword>")
+    execute "tj ".st
+endfunc
+
+function! CtagsGoNextTag()
+    let cmd = ":tn"
+    execute cmd
+endfunc
+
+function! CtagsGoPrevTag()
+    let cmd = ":tp"
+    execute cmd
+endfunc
+
+nnoremap <a-q> :call CtagsGoPrevTag()<cr>
+nnoremap <a-w> :call CtagsGoNextTag()<cr>
+nnoremap <a-e> :tl<cr>
+nnoremap <leader>ts :ts<cr>
+nnoremap <leader>tj :call Tj()<cr>
+" cscope config.
+function! CscopeConfigure()
+    let g:cscope_silent=1
+    nnoremap <leader>fa :call CscopeFindInteractive(expand('<cword>'))<CR>
+    nnoremap <leader>ll :call ToggleLocationList()<CR>
+    " s: Find this C symbol
+    nnoremap  <leader>fs :call CscopeFind('s', expand('<cword>'))<CR>
+    " g: Find this definition
+    nnoremap  <leader>fg :call CscopeFind('g', expand('<cword>'))<CR>
+    " d: Find functions called by this function
+    nnoremap  <leader>fd :call CscopeFind('d', expand('<cword>'))<CR>
+    " c: Find functions calling this function
+    nnoremap  <leader>fc :call CscopeFind('c', expand('<cword>'))<CR>
+    " t: Find this text string
+    nnoremap  <leader>ft :call CscopeFind('t', expand('<cword>'))<CR>
+    " e: Find this egrep pattern
+    nnoremap  <leader>fe :call CscopeFind('e', expand('<cword>'))<CR>
+    " f: Find this file
+    nnoremap  <leader>ff :call CscopeFind('f', expand('<cword>'))<CR>
+    " i: Find files #including this file
+    nnoremap  <leader>fi :call CscopeFind('i', expand('<cword>'))<CR>
+    nnoremap <leader>ac :41<cr>
+    set csprg=/usr/bin/cscope
+    set nocsverb
+    cs add ~/work/algorithms/cscope.out
+    set csverb
+    set csto=0
+    set cst
+endfunction
+
+" NERDTree Configurations
+" NERDTree and Directory navigation shortcuts
+"let NERDTreeMapOpenInTab='<ENTER>'
+"let NERDTreeMapOpenInTab='\r'
+" let NERDTreeQuitOnOpen = 1
+nnoremap <F7> :NERDTreeToggle<CR>
+" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
+let NERDTreeAutoDeleteBuffer = 1
+let NERDTreeMinimalUI = 1
+let NERDTreeDirArrows = 1
+" NerdTreeFind
+nnoremap <leader>nf :NERDTreeFind<cr>
+" TabsToggle Sucks. 너무 많이 깜빡거림...
+" nnoremap <F7> :NERDTreeTabsToggle<CR>
+"autocmd VimEnter * :NERDTreeTabsToggle 
+" Open NerdTree when vim start
+"autocmd VimEnter * :NERDTreeTabsToggle
+"autocmd TabEnter * :NERDTreeToggle<cr>
+
+nnoremap E :Explore<CR>
+nnoremap <F8> :TlistToggle<CR>
+"autocmd VimEnter * wincmd p
+" configuration variables
+let g:ycm_global_ycm_extra_conf = '~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
+let g:cpp_class_scope_highlight = 1
+let g:cpp_experimental_template_highlight = 1
+let Tlist_Use_Right_Window = 1
+let c_no_curly_error=1
+"autocmd ShellCmdPost * :normal ``z.
+"let g:javascript_plugin_jsdoc = 1
+let g:closetag_filenames = "*.html,*.xhtml,*.phtml"
+" g++ compile settings
+" library to be used
+let bindir="/home/astral/work/bin/"
+let libcurses="-lncurses"
+let compile_option_libs=""
+"let compile_exec="/home/astral/work/bin/%<"
+let compile_exec="~/work/bin/".filename
+let gppcompile="read! g++ % -o ~/work/bin/:t:r -std=c++14 && ".compile_exec
+
+let exe_res=" read! ~/work/bin/:t:r"
+" make command for graph project
+let run_cmd="vnew | read! cd .. && make -B -j3 -oO"  
+let dir_list=split(expand('%:p'), "/")
+let cc_option=""
+for str in dir_list
+    if(str == "acm" || str == "boj")
+        let run_cmd="!./res"
+        " single file compile and run
+        " let run_cmd="!g++ % -o %< -std=c++14 && ./%< < %<.in"
+    elseif (str == "test" || str == "apps")
+        let run_cmd="!g++ % -o %< -std=c++14 ".cc_option."&& ./%<"
+    elseif (str =="snip-algos")
+        let run_cmd="!g++ % -o %< -std=c++14 && ./%<"
+    elseif (str == "programming-pearls")
+        let run_cmd="!g++ % -o %< -std=c++14"
+    elseif (str == "taocp")
+        let run_cmd="!g++ % -o %< -std=c++14 && ./%<"
+    elseif (str == "scala")
+        let run_cmd="!scalac % && scala %<"
+    else 
+        let gppcompile="vnew | read! g++ ".expand('%:t')." -o ~/work/bin/:t:r -std=c++14 -O2"
+    endif
+endfor
+" autocmd BufEnter * silent! lcd %:p:h
+autocmd BufEnter *.cpp silent! :w
+"autocmd BufEnter * call SetCompileCmd()
+"autocmd Filetype cpp nnoremap <leader>r :w<cr>:execute gppcompile<cr>:execute exe_res<cr>
+autocmd Filetype cpp nnoremap <leader>r :w<cr>:execute run_cmd<cr>
+autocmd Filetype java nnoremap <leader>r :w<cr>:!javac % && java %<<cr>
+autocmd Filetype scala nnoremap <leader>r :w<cr>:!scala % && scala %<<cr>
+autocmd Filetype pgc set syntax=esqlc
+"autocmd Filetype cpp nnoremap <leader>r :w<cr>:execute exe_res<cr>
+autocmd Filetype sh nnoremap <F4> :!chmod +x % && %<cr>
+autocmd Filetype js nnoremap <F4> :!node %<cr>
+" autocmd Filetype javascript set formatprg=prettier\ --stdin
+" autocmd BufWritePre *.js :normal gggqG
+autocmd Filetype html nnoremap <leader>p :!google-chrome %<cr>
+autocmd Filetype c nnoremap <leader>r :!gcc % -o %< && ./%< <cr>
+
+" DoxygenToolkit Setting
+" http://www.vim.org/scripts/script.php?script_id=987
+function! DoDoxygenMapping()
+    nnoremap <leader>DL :DoxLic<cr>
+    nnoremap <leader>DA :DoxAuthor<cr>
+    nnoremap <leader>DD :Dox<cr>
+endfunction
+
+autocmd Filetype c,h,hpp,cc,cpp,py,go :call DoDoxygenMapping()
+
+"
+"
+" Aha. vim makes '.md' to '.markdown'
+autocmd Filetype markdown,md nnoremap <leader>v :MarkdownPreview<cr>
+autocmd Filetype makrdown,md nnoremap <leader>c :MarkdownStop<cr>
+" Syntaxhighlight for qmake 
+autocmd BufRead,BufNewFile *.pro set filetype=qmake
+" color setting
+"autocmd Filetype vim nnoremap <leader>r :w<cr>:source %:p<cr>
+highlight Search cterm=NONE ctermfg=19 ctermbg=159
+
+set regexpengine=1
+
+let asmsyntax='gas'
+let filetype_inc='gas'
+au BufRead,BufNewFile *.s   let asmsyntax='gas'|let filetype_inc='gas'
+au BufRead,BufNewFile *.S   let asmsyntax='gas'|let filetype_inc='gas'
+au BufRead,BufNewFile *.asm let asmsyntax='armasm'|let filetype_inc='armasm'
+
+let NERDSpaceDelims=1 " put a space when <leader>cc using NerdCommenter'
+set runtimepath^=~/.vim/bundle/ctrlp.vim
+
+
+
+" fuzzy command https://github.com/jhawthorn/fzy
+function! FzyCommand(choice_command, vim_command)
+  try
+    let output = system(a:choice_command . " | fzy ")
+  catch /Vim:Interrupt/
+    " Swallow errors from ^C, allow redraw! below
+  endtry
+  redraw!
+  if v:shell_error == 0 && !empty(output)
+    exec a:vim_command . ' ' . output
+  endif
+endfunction
+
+
+" Looks like I used it for tinkering linux not used anymore
+" nnoremap <leader>fle :call FzyCommand("find /usr/src/linux-source-4.4.0/ -type f", ":e")<cr>
+" nnoremap <leader>fe :call FzyCommand("find -type f", ":e")<cr>
+" nnoremap <leader>fv :call FzyCommand("find -type f", ":vs")<cr>
+" nnoremap <leader>fs :call FzyCommand("find -type f", ":sp")<cr>
+
+" Go tag configuratoin
+" https://github.com/jstemmer/gotags
+let g:tagbar_type_go = {
+	\ 'ctagstype' : 'go',
+	\ 'kinds'     : [
+		\ 'p:package',
+		\ 'i:imports:1',
+		\ 'c:constants',
+		\ 'v:variables',
+		\ 't:types',
+		\ 'n:interfaces',
+		\ 'w:fields',
+		\ 'e:embedded',
+		\ 'm:methods',
+		\ 'r:constructor',
+		\ 'f:functions'
+	\ ],
+	\ 'sro' : '.',
+	\ 'kind2scope' : {
+		\ 't' : 'ctype',
+		\ 'n' : 'ntype'
+	\ },
+	\ 'scope2kind' : {
+		\ 'ctype' : 't',
+		\ 'ntype' : 'n'
+	\ },
+	\ 'ctagsbin'  : 'gotags',
+	\ 'ctagsargs' : '-sort -silent'
+\ }
+
+" Setting colorscheme
+" colorscheme gruvbox
+" SerialExperimentsLain was my favorite for a long time!, 
+" but i am moving onto the next scheme for rust.
+" colorscheme SerialExperimentsLain
+" colorscheme github_dark
+" colorscheme github_dark_colorblind
+" mainly for capturing code snippets for inserting into ppt
+function! ChangeColorThemeToPaperColorLight()
+    :colorscheme PaperColor
+    :set background=light
+endfunction
+nnoremap <leader>li :call ChangeColorThemeToPaperColorLight()<cr>
+set termguicolors
+function! MaterialColorTheme()
+    let g:material_terminal_italics = 1
+    " let g:material_theme_style = 'default' | 'palenight' | 'ocean' | 'lighter' | 'darker' | 'default-community' | 'palenight-community' | 'ocean-community' | 'lighter-community' | 'darker-community'
+    " darker, 
+    let g:material_theme_style = 'darker'
+    :colorscheme material
+endfunction
+" call MaterialColorTheme()
+colorscheme PaperColor
+
+" set background=dark
+" set termguicolors
+" colorscheme deep-space
+" let g:deepspace_italics=1
+" let g:airline_theme='deep_space'
+
+
+let g:ackprg = 'ag --nogroup --nocolor --column'
+
+" register mapping
+nnoremap <a-r><a-0> "0p
+nnoremap <a-r><a-1> "1p
+nnoremap <a-r><a-2> "2p
+nnoremap <a-r><a-3> "3p
+nnoremap <a-r><a-4> "4p
+nnoremap <a-r><a-5> "5p
+nnoremap <a-r><a-6> "6p
+nnoremap <a-r><a-7> "7p
+nnoremap <a-r><a-8> "8p
+nnoremap <a-r><a-9> "9p
+nnoremap <a-r><a-h> "hp
+nnoremap <a-r><a-i> "ip
+nnoremap <a-r><a-k> "kp
+nnoremap <a-r><a-o> "op
+nnoremap <a-r><a-q> "qp
+nnoremap <a-r><a-t> "tp
+nnoremap <a-r><a-w> "wp
+nnoremap <a-r><a-*> "*p
+nnoremap <a-r><a-+> "+p
+
+" copy a word into system clipboard --> Replaced with ctrl+c 
+" nnoremap <leader>va viw"+y 
+
+" copy current file's path to system clipboard
+" https://stackoverflow.com/questions/916875/yank-file-name-path-of-current-buffer-in-vim
+" Relative path
+nnoremap <leader>cf :let @+ = expand("%")<cr>
+" Absolute path
+nnoremap <leader>cF :let @+ = expand("%:p")<cr>
+" File name
+nnoremap <leader>ct :let @+ = expand("%:t")<cr>
+" Directory Name
+nnoremap <leader>ch :let @+ = expand("%:p:h")<cr>
+
+" Vim airline settings
+let g:airline#extensions#tabline#enabled = 1
+
+" Settings for https://github.com/vim-syntastic/syntastic -- start --
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
+
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+" Settings for https://github.com/vim-syntastic/syntastic -- start --
+
+
+let g:bufferline_echo = 1
+" Shortcuts for vimwiki 
+" Settings for https://github.com/edkolev/promptline.vim
+nnoremap <leader>wb viwxi**<esc>hp
+vnoremap <leader>wb xi**<esc>hp
+nnoremap <leader>wc bi_<esc>ea_<esc>
+vnoremap <leader>wc xi__<esc>hp<esc>
+vnoremap <leader><enter> xi[[]]<esc>hhp
+nnoremap <leader>h1 i=<space><space><space>=<esc>hhi
+nnoremap <leader>h2 i==<space><space><space>==<esc>hhhi
+nnoremap <leader>h3 i===<space><space><space>===<esc>hhhhi
+nnoremap <leader>h4 i====<space><space><space>====<esc>hhhhhi
+" highlight OverLength ctermbg=red ctermfg=white guibg=#592929
+" match OverLength /\%81v.\+/
+"
+" Vimwiki more shortcuts
+nnoremap <leader>woc :VimwikiTOC<cr>
+let wiki = {}
+let wiki.path = '~/vimwiki/kbase'
+let wiki.nested_syntaxes = {'python': 'python', 'c++': 'cpp', 'proto':'proto'}
+let g:vimwiki_list =
+             \[{
+             \'path': '~/vimwiki/kbase/', 
+             \'path_html': '~/vimwiki/kbase/html/', 
+             \'auto_export': 0,
+             \'auto_toc':1,
+             \'auto_tags':1, 
+             \'css_name':'github-flavored.css'}, 
+             \ {'path' : '~/vimwiki/diary/'}
+            \]
+
+" https://stackoverflow.com/questions/4545275/vim-close-all-buffers-but-this-one
+" nnoremap <leader>bd :w | %bd | e#<cr>
+"
+let g:licenses_copyright_holders_name = 'Yongrae, Jo <memex@postech.ac.kr>'
+let g:licenses_authors_name = 'Yongrae, Jo <memex@postech.ac.kr>'
+
+
+
+" https://stackoverflow.com/questions/908269/opening-ctags-in-new-tab-in-gvim
+" open ctag in tab/vertical split
+map <C-\> :tab split<CR>:exec("tag ".expand("<cword>"))<CR>
+map <leader><C-\> :vsp <CR>:exec("tag ".expand("<cword>"))<CR>
+
+"https://stackoverflow.com/questions/7961581/is-there-a-vim-command-to-relocate-a-tab Move current tab into the specified direction.
+"
+" @param direction -1 for left, 1 for right.
+function! TabMove(direction)
+    let s:current_tab=tabpagenr()
+    let s:total_tabs = tabpagenr("$")
+
+    " Wrap to end
+    if s:current_tab == 1 && a:direction == -1
+        tabmove
+    " Wrap to start
+    elseif s:current_tab == s:total_tabs && a:direction == 1
+        tabmove 0
+    " Normal move
+    else
+        execute (a:direction > 0 ? "+" : "-") . "tabmove"
+    endif
+    echo "Moved to tab " . tabpagenr() . " (previosuly " . s:current_tab . ")"
+endfunction
+
+" Move tab left or right using Command-Shift-H or L
+map <a-9> :call TabMove(-1)<CR>
+map <a-0> :call TabMove(1)<CR>
+
+" augroup mycppfiles
+"   au!
+"   au BufEnter *.h let b:fswitchdst  = 'c,cpp,cc,C'
+"   au BufEnter *.cc let b:fswitchdst  = 'h'
+"   " au BufEnter *.c let b:fswitchdst  = 'h'
+" augroup END
+
+nnoremap <leader>FSR :FSSplitRight<cr>
+nnoremap <leader>FSL :FSSplitLeft<cr>
+nnoremap <leader>FSA :FSSplitAbove<cr>
+nnoremap <leader>FSB :FSSplitBelow<cr>
+
+
+
+
+autocmd Filetype py nnoremap <f4> :silent exec "!chmod +x % && ./%"<cr>
+
+nnoremap <f4> :!chmod +x % && ./%<cr>
+
+" sudo write
+cnoremap w!! call SudoSaveFile()
+
+function! SudoSaveFile() abort
+    SudaWrite
+  " execute (has('gui_running') ? '' : 'silent') 'write !env SUDO_EDITOR=tee sudo -e % >/dev/null'
+  " let &modified = v:shell_error
+endfunction
+
+
+
+" https://stackoverflow.com/questions/6778961/alt-key-shortcuts-not-working-on-gnome-terminal-with-vim/10216459#10216459 
+" let c='a'
+" while c <= 'z'
+"   exec "set <A-".c.">=\e".c
+"   exec "imap \e".c." <A-".c.">"
+"   let c = nr2char(1+char2nr(c))
+" endw
+
+set timeout ttimeoutlen=50
+
+" 가장 가까운 .git 디렉토리를 cwd(현재 작업 디렉토리)로 사용
+let g:ctrlp_map = '<c-p>'
+let g:ctrlp_cmd = 'CtrlPMixed'
+let g:ctrlp_working_path_mode = 'r'
+
+nnoremap <a-b> :CtrlPBuffer<cr>
+nnoremap <a-x> :CtrlPMixed<cr>
+nnoremap <a-f> :CtrlPMRU<cr>
+
+nnoremap <leader>ep :e ~/.bash_profile<cr>
+nnoremap <leader>er :e ~/.bashrc<cr>
+
+" Normally the quickfix window is at the bottom of the screen.  If there are
+" vertical splits, it's at the bottom of the rightmost column of windows.  To
+" make it always occupy the full width: 
+execute  'botright cwindow'
+syntax on
+
+if has("autocmd")
+    if v:version > 701
+        autocmd Syntax * call matchadd('Debug', '\W\zs\(NOTE\|INFO\|IDEA|DESC\)')
+        autocmd Syntax * call matchadd('Search', '\W\zs\(HELP\|DEBUG\)')
+        autocmd Syntax * call matchadd('ErrorMsg', '\W\zs\(ERROR\|FATAL\)')
+    endif
+endif
+
+let g:syntastic_python_flake8_args = "--ignore=E221,E128,E131,E501,E225,W191,E101,E231,E122,E126,E241 --max-complexity 10"
+
+
+let g:ale_fixers = {
+  \ 'javascript': ['eslint']
+  \ }
+
+
+
+" Enable folding by mouse, for me, folding looks shitty... so i don't wanna
+" use it.. lol
+set foldcolumn=0
+hi FoldColumn ctermbg=242
+hi Folded ctermbg=242
+
+" Open a file in the quickfix windows
+" autocmd BufReadPost quickfix nnoremap <buffer> <CR> <CR>
+
+" Toggle a window to full size and re-store prev windows
+nnoremap <c-w><c-o> :ZoomWin<cr>
+
+
+" Set ultisnips triggers
+let g:UltiSnipsExpandTrigger="<tab>"                                            
+let g:UltiSnipsJumpForwardTrigger="<tab>"                                       
+let g:UltiSnipsJumpBackwardTrigger="<s-tab>" 
+
+
+" neovim COC Setting
+inoremap <silent><expr> <tab> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<TAB>"
+inoremap <silent><expr> <cr> "\<c-g>u\<CR>"
+
+
+" yaml syntax support for ansible 
+au BufRead,BufNewFile */playbooks/*.yml set filetype=yaml.ansible
+filetype plugin indent on    " required
+
+
+
+tnoremap <Esc> <C-\><C-n>
+tnoremap <A-h> <C-\><C-N><C-w>h
+tnoremap <A-j> <C-\><C-N><C-w>j
+tnoremap <A-k> <C-\><C-N><C-w>k
+tnoremap <A-l> <C-\><C-N><C-w>l
+inoremap <A-h> <C-\><C-N><C-w>h
+inoremap <A-j> <C-\><C-N><C-w>j
+inoremap <A-k> <C-\><C-N><C-w>k
+inoremap <A-l> <C-\><C-N><C-w>l
+nnoremap <A-h> <C-w>h
+nnoremap <A-j> <C-w>j
+nnoremap <A-k> <C-w>k
+nnoremap <A-l> <C-w>l
+
+function! ExecuteAckOnWord()
+    let cmd=':Ack '.expand('<cword>')
+    execute cmd
+endfunction
+nnoremap <leader>ak :call ExecuteAckOnWord()<cr>
+
+set clipboard+=unnamedplus
+
+"
+" -----------------------------------------------------------------------------
+" Rust configurations
+" autocmd Filetype rs nnoremap <leader>rr :!rustc %<cr>
+autocmd FileType rust call RustConfigure()
+function! RustConfigure()
+    nnoremap <leader>b :Cbuild<cr>
+    nnoremap <leader>r :Crun<cr>
+    " Only syntax checking, faster than cargo build, which generates object
+    " files...
+    nnoremap <leader>k :Cargo check<cr>
+
+    " --release option generates the final, optimized program
+    nnoremap <leader>e :Cargo build --release<cr>
+    nnoremap q :close<cr>
+    " nnoremap <leader>. :RustFmt <bar> w<cr>
+    " autocmd BufWritePost *.rs :RustFmt
+
+    " https://blog.logrocket.com/configuring-vim-rust-development/#coc-nvim
+    let g:rustfmt_autosave = 1
+    let g:rustfmt_emit_files = 1
+    let g:rustfmt_fail_silently = 0
+
+    nmap <silent> <c-]> <Plug>(coc-definition)
+    nmap <silent> gd <Plug>(coc-definition)
+    nmap <silent> gy <Plug>(coc-type-definition)
+    nmap <silent> gi <Plug>(coc-implementation)
+    nmap <silent> gr <Plug>(coc-references)
+    inoremap <silent><expr> <TAB>
+                \ pumvisible() ? "\<C-n>" :
+                \ <SID>check_back_space() ? "\<TAB>" :
+                \ coc#refresh()
+    inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+    function! s:check_back_space() abort
+        let col = col('.') - 1
+        return !col || getline('.')[col - 1]  =~# '\s'
+    endfunction
+
+    if has('nvim')
+        inoremap <silent><expr> <c-space> coc#refresh()
+    else
+        inoremap <silent><expr> <c-@> coc#refresh()
+    endif
+
+
+
+    let g:LanguageClient_serverCommands = {
+                \ 'rust': ['rust-analyzer'],
+                \ }
+    autocmd FileType rust let test#strategy = "neovim"
+    " autocmd FileType rust nmap stt :TestNearest<CR>
+    " autocmd FileType rust nmap stf :TestFile<CR>
+    nmap <silent> <leader>tn :RustTest<CR>
+    " nmap <silent> <leader>tn :TestNearest<CR>
+
+    nmap <silent> <leader>tt :TestFile<CR>
+    nmap <silent> <leader>ta :TestSuite<CR>
+    nmap <silent> <leader>tl :TestLast<CR>
+    nmap <silent> <leader>tg :TestVisit<CR>
+
+    " Close Quickfix window
+    " nnoremap <leader>lm :lcl<cr>
+    " autocmd BufEnter *.rs :lcl<CR>
+    nnoremap <silent> <C-w><C-w> <C-w><C-w>:if &buftype ==# 'quickfix'<Bar>wincmd w<Bar>endif<CR>
+
+endfunction
+
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
+" Symbol renaming
+nmap <leader>rn <Plug>(coc-rename)
+
+" Formatting selected code
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
+
+lua require("toggleterm").setup()
+" autocmd TermEnter term://*toggleterm#*
+"       \ tnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
+nnoremap <space>m :ToggleTerm<cr>
+nnoremap <space>r :TermExec cmd="compgeth;"<cr>
+
+"
+" GoLang configurations using vimgo(faith/vim-go)
+autocmd Filetype go call VimGoConfigure()
+
+" Exit with saved sessions to return back to the same one
+nnoremap <leader>sq :mksession! ~/.vim/sessions/lasts.vim<cr>
+
+
+" Open current directory in ToggleTerm
+function! EnterCurrentFileDirectoryToInTerm()
+    let @a=expand('%:p:h')
+    " command! '%s/\<'.expand('<cword>').'\>/'.a:newWord.'/g<cr>'
+endfunction
+
+vmap <leader>y <Plug>OSCYankVisual
+nmap <leader>y <Plug>OSCYankOperator
+let g:oscyank_silent = v:true
+" require('osc52').setup{}
+" vim.keymap.set('v', '<leader>y', require('osc52').copy_visual)
+
+
