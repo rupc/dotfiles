@@ -4,6 +4,24 @@
 setopt PROMPT_SUBST
 
 # -----------------------------------------------------------------------------
+# 0-1. OS 감지 — 이후 모든 mac/linux 분기는 $DOTFILES_OS 로 판단
+# -----------------------------------------------------------------------------
+case "$(uname -s)" in
+  Darwin) export DOTFILES_OS="mac" ;;
+  Linux)  export DOTFILES_OS="linux" ;;
+  *)      export DOTFILES_OS="other" ;;
+esac
+
+if [[ "$DOTFILES_OS" == "mac" ]]; then
+  # Homebrew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
+  if [ -x /opt/homebrew/bin/brew ]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [ -x /usr/local/bin/brew ]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+fi
+
+# -----------------------------------------------------------------------------
 # 1. Oh My Zsh 설정
 # -----------------------------------------------------------------------------
 export ZSH="$HOME/.oh-my-zsh"
@@ -55,10 +73,13 @@ if [ -d "/usr/local/go/bin" ]; then
 fi
 export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin"
 
-# FZF
+# FZF (공통: ~/.fzf.zsh 우선, 없으면 OS별 설치 경로에서 로드)
 if [ -f ~/.fzf.zsh ]; then
   source ~/.fzf.zsh
-elif [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
+elif [[ "$DOTFILES_OS" == "mac" ]] && command -v fzf >/dev/null 2>&1; then
+  # Homebrew fzf (0.48+): 키바인딩/자동완성 통합 로드
+  source <(fzf --zsh)
+elif [[ "$DOTFILES_OS" == "linux" ]] && [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
   source /usr/share/doc/fzf/examples/key-bindings.zsh
   source /usr/share/doc/fzf/examples/completion.zsh
 fi
@@ -80,15 +101,19 @@ alias k=kubectl
 # -----------------------------------------------------------------------------
 # 5. PNPM / Gcloud / Conda / NVM
 # -----------------------------------------------------------------------------
-export PNPM_HOME="/home/jyr/.local/share/pnpm"
+if [[ "$DOTFILES_OS" == "mac" ]]; then
+  export PNPM_HOME="$HOME/Library/pnpm"
+else
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+fi
 case ":$PATH:" in
   *":$PNPM_HOME:"*) ;;
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
 # Google Cloud SDK
-if [ -f '/home/jyr/google-cloud-sdk/path.zsh.inc' ]; then . '/home/jyr/google-cloud-sdk/path.zsh.inc'; fi
-if [ -f '/home/jyr/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/jyr/google-cloud-sdk/completion.zsh.inc'; fi
+if [ -f "$HOME/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/google-cloud-sdk/path.zsh.inc"; fi
+if [ -f "$HOME/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/google-cloud-sdk/completion.zsh.inc"; fi
 
 # ---- Conda: 프롬프트 덮어쓰기 방지 핵심 ----
 # 1) base 자동 활성화 꺼두는 걸 강추:
@@ -96,33 +121,39 @@ if [ -f '/home/jyr/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/jyr/goo
 # 2) 그래도 conda가 prompt를 건드리면 아래로 막기:
 export CONDA_CHANGEPS1=false
 
-__conda_setup="$('/home/jyr/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+__conda_setup="$("$HOME/miniconda3/bin/conda" 'shell.zsh' 'hook' 2> /dev/null)"
 if [ $? -eq 0 ]; then
   eval "$__conda_setup"
 else
-  if [ -f "/home/jyr/miniconda3/etc/profile.d/conda.sh" ]; then
-    . "/home/jyr/miniconda3/etc/profile.d/conda.sh"
-  elif [ -d "/home/jyr/miniconda3/bin" ]; then
-    export PATH="/home/jyr/miniconda3/bin:$PATH"
+  if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    . "$HOME/miniconda3/etc/profile.d/conda.sh"
+  elif [ -d "$HOME/miniconda3/bin" ]; then
+    export PATH="$HOME/miniconda3/bin:$PATH"
   fi
 fi
 unset __conda_setup
 
-# NVM
+# NVM (공통: ~/.nvm, mac은 Homebrew 설치 경로도 확인)
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+elif [[ "$DOTFILES_OS" == "mac" ]] && [ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ]; then
+  . "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"
+fi
 
 # -----------------------------------------------------------------------------
-# 6. CUDA Toolkit
+# 6. CUDA Toolkit (linux 전용 — mac은 CUDA 미지원)
 # -----------------------------------------------------------------------------
-if [ -d "/usr/local/cuda-13.1" ]; then
-  export CUDA_HOME="/usr/local/cuda-13.1"
-  export PATH="$CUDA_HOME/bin:$PATH"
-  export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
-elif [ -d "/usr/local/cuda" ]; then
-  export CUDA_HOME="/usr/local/cuda"
-  export PATH="$CUDA_HOME/bin:$PATH"
-  export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+if [[ "$DOTFILES_OS" == "linux" ]]; then
+  if [ -d "/usr/local/cuda-13.1" ]; then
+    export CUDA_HOME="/usr/local/cuda-13.1"
+    export PATH="$CUDA_HOME/bin:$PATH"
+    export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+  elif [ -d "/usr/local/cuda" ]; then
+    export CUDA_HOME="/usr/local/cuda"
+    export PATH="$CUDA_HOME/bin:$PATH"
+    export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+  fi
 fi
 
 # -----------------------------------------------------------------------------

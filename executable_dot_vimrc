@@ -683,10 +683,12 @@ Plug 'kaicataldo/material.vim', { 'branch': 'main' }
 " Plug 'ycm-core/YouCompleteMe'
 Plug 'tomlion/vim-solidity'
 Plug 'NLKNguyen/papercolor-theme'
-Plug 'autozimu/LanguageClient-neovim', {
-    \ 'branch': 'next',
-    \ 'do': 'bash install.sh',
-    \ }
+" LanguageClient-neovim: 프로젝트 archived + Apple Silicon 바이너리 없음.
+" LSP는 coc.nvim이 담당하므로 비활성화 (필요시 주석 해제, linux에서만 동작)
+" Plug 'autozimu/LanguageClient-neovim', {
+"     \ 'branch': 'next',
+"     \ 'do': 'bash install.sh',
+"     \ }
 " Make sure you use single quotes
 " Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
 Plug 'junegunn/vim-easy-align'
@@ -811,7 +813,10 @@ function! CscopeConfigure()
     " i: Find files #including this file
     nnoremap  <leader>fi :call CscopeFind('i', expand('<cword>'))<CR>
     nnoremap <leader>ac :41<cr>
-    set csprg=/usr/bin/cscope
+    " 환경-aware: PATH에서 cscope 탐색 (mac: brew, linux: /usr/bin)
+    if executable('cscope')
+        let &csprg = exepath('cscope')
+    endif
     set nocsverb
     cs add ~/work/algorithms/cscope.out
     set csverb
