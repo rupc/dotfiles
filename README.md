@@ -49,6 +49,20 @@ pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 �
 | colima | docker 런타임 VM (**mac 전용**) | `brew install colima` → `colima start` | 불필요 (리눅스는 네이티브 데몬) |
 | gh | GitHub CLI (인증/PR) | `brew install gh` | `sudo apt install gh` |
 
+### 개발 편의 툴 (mac/linux 공용, 셋업 스크립트가 함께 설치)
+
+| 분류 | 툴 |
+|---|---|
+| 시스템 모니터링 | `htop` · `btop` · `ncdu` · `duf` · `glances` · `mactop`/`asitop`(**mac 전용**) |
+| 파일 탐색/검색 | `tree` · `eza`(ls) · `bat`(cat) · `fd`(find) · `ripgrep`(grep) · `zoxide`(디렉토리 점프 `z`) |
+| 텍스트/데이터 | `jq` · `yq` · `git-delta` · `hexyl` |
+| 워크플로우 | `tmux` · `lazygit` · `direnv` · `entr` · `hyperfine` · `tldr` · `shellcheck` · `watch`(mac만 설치) |
+| 네트워크/컨테이너 | `httpie` · `mtr` · `lazydocker` · `dive` · `k9s` |
+
+- zsh에서 `zoxide`(`z`)와 `direnv` 훅은 설치되어 있을 때만 자동 로드된다 (zshrc 6-1절)
+- Ubuntu apt 패키지명 차이: `bat`→`batcat`, `fd`→`fdfind`(setup-linux.sh가 표준 이름으로 심링크), `delta`는 `git-delta`
+- 구버전 Ubuntu apt에 없는 툴(lazygit, lazydocker, dive, k9s, eza 등)은 스크립트가 건너뛰고 알려준다
+
 OS별 차이 요약:
 - **mac**: docker 데몬이 없어서 **colima**를 런타임으로 사용 (Docker Desktop 불필요, sudo 없이 설치됨)
 - **mac**: brew는 `python3`/`pip3`만 제공하므로 `python`/`pip` 심링크를 걸어줌; 리눅스는 `python-is-python3` 패키지가 같은 역할

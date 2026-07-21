@@ -14,6 +14,26 @@ sudo apt-get install -y \
     python3 python3-pip python3-venv python-is-python3
 # python-is-python3: python -> python3 심링크 (mac의 심링크와 동일 역할)
 
+# 개발 편의 CLI 툴 (Brewfile의 리눅스 대응 — apt 패키지명이 다른 것 주의)
+#  * bat -> batcat, fd -> fdfind 로 설치됨 (아래에서 심링크 처리)
+#  * mactop/asitop/colima/watch 는 mac 전용이라 제외
+DEV_TOOLS=(
+    htop btop ncdu duf glances
+    tree eza bat fd-find ripgrep zoxide
+    jq yq git-delta hexyl
+    tmux lazygit direnv entr hyperfine tldr shellcheck
+    httpie mtr gh
+    lazydocker dive k9s
+)
+for pkg in "${DEV_TOOLS[@]}"; do
+    sudo apt-get install -y "$pkg" || echo "skip: $pkg (이 배포판 apt에 없음 — 수동 설치 필요)"
+done
+
+# Debian/Ubuntu는 이름 충돌 때문에 bat/fd 실행파일명이 다름 -> 표준 이름으로 심링크
+mkdir -p "$HOME/.local/bin"
+command -v batcat >/dev/null 2>&1 && ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
+command -v fdfind >/dev/null 2>&1 && ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+
 # docker + compose (v2 플러그인, 배포판에 따라 패키지명이 다름)
 sudo apt-get install -y docker.io
 sudo apt-get install -y docker-compose-v2 || sudo apt-get install -y docker-compose-plugin || sudo apt-get install -y docker-compose

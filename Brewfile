@@ -20,3 +20,48 @@ brew "python@3.14"
 brew "docker"
 brew "docker-compose"
 brew "colima"
+
+# GitHub CLI
+brew "gh"
+
+# --- 개발 편의 CLI 툴 ---
+
+# 시스템 모니터링
+brew "htop"
+brew "btop"
+brew "mactop"    # mac 전용: Apple Silicon 모니터
+brew "asitop"    # mac 전용: Apple Silicon 전력/GPU 모니터
+brew "ncdu"
+brew "duf"
+brew "glances"
+
+# 파일 탐색/검색 (모던 대체)
+brew "tree"
+brew "eza"       # ls 대체
+brew "bat"       # cat 대체
+brew "fd"        # find 대체
+brew "ripgrep"   # grep 대체 (rg)
+brew "zoxide"    # 스마트 디렉토리 점프 (z)
+
+# 텍스트/데이터
+brew "jq"
+brew "yq"
+brew "git-delta" # git diff 하이라이트
+brew "hexyl"
+
+# 개발 워크플로우
+brew "tmux"
+brew "lazygit"
+brew "direnv"
+brew "entr"
+brew "hyperfine"
+brew "tldr"
+brew "shellcheck"
+brew "watch"     # 리눅스는 기본 탑재, mac만 설치
+
+# 네트워크/컨테이너
+brew "httpie"
+brew "mtr"
+brew "lazydocker"
+brew "dive"
+brew "k9s"
