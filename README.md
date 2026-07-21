@@ -63,6 +63,51 @@ pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 �
 - Ubuntu apt 패키지명 차이: `bat`→`batcat`, `fd`→`fdfind`(setup-linux.sh가 표준 이름으로 심링크), `delta`는 `git-delta`
 - 구버전 Ubuntu apt에 없는 툴(lazygit, lazydocker, dive, k9s, eza 등)은 스크립트가 건너뛰고 알려준다
 
+## 셸 플러그인 & 인터랙티브 툴 정리
+
+zshrc의 `plugins=(...)` 배열과 6-1절 훅으로 로드된다. 전부 설치되어 있을 때만 로드되므로
+일부가 없어도 셸이 깨지지 않는다.
+
+### zsh 플러그인 (저장소에 스냅샷 포함, `dot_oh-my-zsh/custom/plugins/`)
+
+| 플러그인 | 뭔지 | 활용법 |
+|---|---|---|
+| zsh-autosuggestions | 히스토리 기반 회색 자동제안 | 제안이 뜨면 →(오른쪽 화살표)로 수락 |
+| zsh-syntax-highlighting | 커맨드 문법 실시간 색칠 | 오타/없는 커맨드는 빨간색으로 표시됨 |
+| fzf-tab | **탭 완성을 fzf 팝업으로** | `cd <TAB>`, `git checkout <TAB>` 후 퍼지검색으로 선택 |
+| zsh-history-substring-search | 입력 단어로 히스토리 탐색 | `git` 타이핑 후 ↑/↓ → git 커맨드만 순회 |
+| zsh-completions | 추가 자동완성 정의 모음 | 설치만 하면 됨 (수백 개 툴 지원) |
+| forgit | git을 fzf 인터랙티브로 | `ga`(add), `glo`(log), `gd`(diff), `gcf`(checkout file) |
+| zsh-better-npm-completion | npm 자동완성 개선 | `npm run <TAB>`에 스크립트 목록 |
+
+### oh-my-zsh 내장 플러그인 (이름만 활성화)
+
+| 플러그인 | 뭔지 | 활용법 |
+|---|---|---|
+| git | git alias 모음 | `gst`(status), `gco`(checkout), `gcmsg`(commit -m) |
+| dirhistory | 디렉토리 이동 히스토리 | Alt+←/→ 로 이전/다음 디렉토리 |
+| extract | 만능 압축 해제 | `extract 파일.tar.gz` (포맷 자동 인식, alias `x`) |
+| autojump | 자주 가는 디렉토리 점프 | `j 디렉토리키워드` |
+| kubectl | k8s alias + 완성 | `k`(kubectl), `kgp`(get pods) |
+| history / emoji / encode64 | 히스토리 alias, 이모지, base64 | `h`, `emoji`, `e64`/`d64` |
+
+### 훅으로 로드되는 인터랙티브 툴 (zshrc 6-1절)
+
+| 툴 | 뭔지 | 활용법 |
+|---|---|---|
+| pure | 미니멀 프롬프트 (테마) | 자동 적용 (git 상태/실행시간 표시) |
+| atuin | 히스토리 SQLite DB + 동기화 | **Ctrl-R** → 전체 히스토리 퍼지검색 UI |
+| zoxide | 스마트 디렉토리 점프 | `z 키워드` (방문 빈도 학습) |
+| direnv | 디렉토리별 환경변수 | 프로젝트에 `.envrc` 두면 진입 시 자동 로드 |
+| thefuck | 직전 커맨드 오타 교정 | 오타 후 `fuck` 입력 → 교정안 제시 |
+| navi | 커맨드 치트시트 | **Ctrl-G** → 스니펫 검색/조립 |
+| broot | 트리 탐색 + 점프 | `br` 실행, 타이핑으로 필터, Alt+Enter로 cd |
+| yazi | 터미널 파일 매니저 | `y` 실행 (종료 시 마지막 위치로 cd됨) |
+| fzf | 범용 퍼지 파인더 | **Ctrl-T**(파일 삽입), `**<TAB>` 완성 |
+
+키 충돌 정리: **Ctrl-R**=atuin(히스토리), **Ctrl-T**=fzf(파일), **Ctrl-G**=navi(치트시트),
+**↑/↓**=history-substring-search, **Tab**=fzf-tab.
+
 OS별 차이 요약:
 - **mac**: docker 데몬이 없어서 **colima**를 런타임으로 사용 (Docker Desktop 불필요, sudo 없이 설치됨)
 - **mac**: brew는 `python3`/`pip3`만 제공하므로 `python`/`pip` 심링크를 걸어줌; 리눅스는 `python-is-python3` 패키지가 같은 역할

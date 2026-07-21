@@ -59,6 +59,10 @@ brew "tldr"
 brew "shellcheck"
 brew "watch"     # 리눅스는 기본 탑재, mac만 설치
 brew "thefuck"   # 직전 커맨드 오타 교정 ('fuck' 입력)
+brew "atuin"     # 셸 히스토리 DB화 + Ctrl-R 퍼지검색
+brew "navi"      # Ctrl-G 커맨드 치트시트
+brew "broot"     # 디렉토리 트리 탐색/점프 (br)
+brew "yazi"      # 터미널 파일 매니저 (y)
 
 # 네트워크/컨테이너
 brew "httpie"

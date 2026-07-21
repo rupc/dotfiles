@@ -29,16 +29,24 @@ export ZSH="$HOME/.oh-my-zsh"
 # Pure를 쓸 거면 OMZ 테마는 비워두는 게 제일 깔끔함
 ZSH_THEME=""
 
+# 로드 순서 주의: fzf-tab은 앞쪽, syntax-highlighting은 뒤쪽,
+# history-substring-search는 syntax-highlighting 뒤에 와야 함
 plugins=(
   git
+  fzf-tab
   zsh-autosuggestions
-  zsh-syntax-highlighting
+  zsh-completions
   zsh-better-npm-completion
   autojump
   kubectl
   history
   emoji
   encode64
+  dirhistory
+  extract
+  forgit
+  zsh-syntax-highlighting
+  zsh-history-substring-search
 )
 
 if [ -f "$ZSH/oh-my-zsh.sh" ]; then
@@ -165,6 +173,28 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
 # thefuck: 오타 난 직전 커맨드 교정 (오타 후 'fuck' 입력)
 command -v thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)"
+# atuin: 히스토리 DB + Ctrl-R 퍼지검색 (↑키는 history-substring-search 몫으로 남김)
+command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh --disable-up-arrow)"
+# history-substring-search: 입력 중인 단어로 ↑/↓ 히스토리 탐색
+if (( ${+widgets[history-substring-search-up]} )); then
+  bindkey '^[[A' history-substring-search-up
+  bindkey '^[[B' history-substring-search-down
+fi
+# navi: Ctrl-G 커맨드 치트시트
+command -v navi >/dev/null 2>&1 && eval "$(navi widget zsh)"
+# broot: br 런처 (최초 1회 `broot --install` 실행 시 생성됨)
+[ -f "$HOME/.config/broot/launcher/bash/br" ] && source "$HOME/.config/broot/launcher/bash/br"
+# yazi: 종료 시 마지막 디렉토리로 cd 되는 래퍼
+if command -v yazi >/dev/null 2>&1; then
+  function y() {
+    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+      builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
+  }
+fi
 
 # -----------------------------------------------------------------------------
 # 7. (안전장치) 혹시 누가 프롬프트를 또 덮으면 Pure로 다시 되돌리기

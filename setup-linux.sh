@@ -22,12 +22,21 @@ DEV_TOOLS=(
     tree eza bat fd-find ripgrep zoxide
     jq yq git-delta hexyl
     tmux lazygit direnv entr hyperfine tldr shellcheck thefuck
+    navi broot yazi
     httpie mtr gh
     lazydocker dive k9s
 )
 for pkg in "${DEV_TOOLS[@]}"; do
     sudo apt-get install -y "$pkg" || echo "skip: $pkg (이 배포판 apt에 없음 — 수동 설치 필요)"
 done
+
+# atuin: apt에 없으면 공식 설치 스크립트 사용
+if ! command -v atuin >/dev/null 2>&1; then
+    sudo apt-get install -y atuin || curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+fi
+
+# broot: br 런처 파일 생성 (rc 파일에 추가된 source 줄은 이후 chezmoi apply가 정리함)
+command -v broot >/dev/null 2>&1 && broot --install >/dev/null 2>&1 || true
 
 # Debian/Ubuntu는 이름 충돌 때문에 bat/fd 실행파일명이 다름 -> 표준 이름으로 심링크
 mkdir -p "$HOME/.local/bin"

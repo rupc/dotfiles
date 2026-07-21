@@ -28,6 +28,9 @@ fi
 [ -f "$HOME/.vim/autoload/plug.vim" ] || curl -fsSLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
+# broot: br 런처 파일 생성 (rc 파일에 추가된 source 줄은 이후 chezmoi apply가 정리함)
+command -v broot >/dev/null 2>&1 && broot --install >/dev/null 2>&1 || true
+
 # 4. dotfiles 배포 (chezmoi: 이 디렉토리를 source로 사용)
 mkdir -p "$HOME/.config/chezmoi"
 [ -f "$HOME/.config/chezmoi/chezmoi.toml" ] || printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
