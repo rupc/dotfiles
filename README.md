@@ -28,9 +28,29 @@ pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 �
 - vim은 Vundle(`~/.vim/bundle`)과 vim-plug(`~/.vim/plugged`)를 둘 다 사용하며,
   nvim은 `~/.vimrc`를 그대로 source 한다. LSP는 coc.nvim 담당.
 
-## 주요 설치 도구 (Brewfile)
+## 주요 커맨드라인 툴 설치 (macOS / Linux)
 
-chezmoi · fzf · fzy · autojump · neovim · go · node · nvm · python@3.14 · docker · docker-compose · colima
+셋업 스크립트가 아래를 전부 자동으로 설치한다. 개별 설치가 필요할 때 참고용.
 
-- docker는 Docker Desktop 대신 **colima** 런타임 사용 (`colima start`)
-- `python`/`pip` 커맨드는 brew의 `python3`/`pip3`로 심링크됨 (setup 스크립트가 처리)
+| 툴 | 용도 | macOS (Homebrew) | Linux (Ubuntu/Debian) |
+|---|---|---|---|
+| chezmoi | dotfiles 배포/관리 | `brew install chezmoi` | `sh -c "$(curl -fsSL get.chezmoi.io)"` (apt에 없음) |
+| fzf | 퍼지 파인더 (Ctrl-R 등) | `brew install fzf` | `sudo apt install fzf` |
+| fzy | 퍼지 파인더 (vim 연동) | `brew install fzy` | `sudo apt install fzy` |
+| autojump | 디렉토리 점프 (`j`) | `brew install autojump` | `sudo apt install autojump` |
+| neovim | 에디터 (`vi`/`vim` alias) | `brew install neovim` | `sudo apt install neovim` |
+| go | Go 런타임 | `brew install go` | `sudo apt install golang-go` |
+| node | Node.js (시스템 기본) | `brew install node` | nvm으로 설치 (`nvm install --lts`) |
+| nvm | Node 버전 관리 | `brew install nvm` + `mkdir ~/.nvm` | 공식 install.sh (`~/.nvm`에 설치) |
+| python 3 | Python 런타임 | `brew install python@3.14` | `sudo apt install python3 python3-pip python3-venv` |
+| `python`/`pip` 커맨드 | `python3`/`pip3`를 짧은 이름으로 | brew bin에 심링크 (setup 스크립트가 처리) | `sudo apt install python-is-python3` |
+| docker | 컨테이너 CLI | `brew install docker` | `sudo apt install docker.io` |
+| docker compose | 컨테이너 오케스트레이션 | `brew install docker-compose` + cli-plugins 심링크 | `sudo apt install docker-compose-v2` |
+| colima | docker 런타임 VM (**mac 전용**) | `brew install colima` → `colima start` | 불필요 (리눅스는 네이티브 데몬) |
+| gh | GitHub CLI (인증/PR) | `brew install gh` | `sudo apt install gh` |
+
+OS별 차이 요약:
+- **mac**: docker 데몬이 없어서 **colima**를 런타임으로 사용 (Docker Desktop 불필요, sudo 없이 설치됨)
+- **mac**: brew는 `python3`/`pip3`만 제공하므로 `python`/`pip` 심링크를 걸어줌; 리눅스는 `python-is-python3` 패키지가 같은 역할
+- **linux**: node를 apt로 깔면 구버전이라 **nvm** 경유로 설치; mac은 brew node가 최신이라 그대로 사용
+- **linux**: docker 사용에 `sudo usermod -aG docker $USER` + 재로그인 필요
