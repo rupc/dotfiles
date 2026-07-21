@@ -254,10 +254,9 @@ _zsh_highlight_main__is_runnable() {
 _zsh_highlight_main__is_redirection() {
   # A redirection operator token:
   # - starts with an optional single-digit number;
-  # - then, has a '<' or '>' character;
-  # - is not a process substitution [<(...) or >(...)].
-  # - is not a numeric glob <->
-  [[ $1 == (<0-9>|)(\<|\>)* ]] && [[ $1 != (\<|\>)$'\x28'* ]] && [[ $1 != *'<'*'-'*'>'* ]]
+  # - is one of the tokens listed in zshmisc(1)
+  # - however (z) normalizes ! to |
+  [[ ${1#[0-9]} == (\<|\<\>|(\>|\>\>)(|\|)|\<\<(|-)|\<\<\<|\<\&|\&\<|(\>|\>\>)\&(|\|)|\&(\>|\>\>)(|\||\!)) ]]
 }
 
 # Resolve alias.
@@ -349,6 +348,7 @@ _zsh_highlight_highlighter_main_paint()
     'noglob' ''
     # 'time' and 'nocorrect' shouldn't be added here; they're reserved words, not precommands.
 
+    # miscellaneous commands
     'doas' aCu:Lns # as of OpenBSD's doas(1) dated September 4, 2016
     'nice' n: # as of current POSIX spec
     'pkexec' '' # doesn't take short options; immune to #121 because it's usually not passed --option flags
@@ -362,25 +362,22 @@ _zsh_highlight_highlighter_main_paint()
     'env' u:i
     'ionice' cn:t:pPu # util-linux 2.33.1-0.1
     'strace' IbeaosXPpEuOS:ACdfhikqrtTvVxyDc # strace 4.26-0.2
-    'proxychains' q:f # proxychains 4.4.0
-
-    # As of OpenSSH 8.1p1
-    'ssh-agent' aEPt:csDd:k
-    # suckless-tools v44
-    # Argumentless flags that can't be followed by a command: -v
-    'tabbed' gnprtTuU:cdfhs
-
-    # moreutils 0.62-1
-    'chronic' :ev
-    'ifne' :n
-
-    # grc - a "generic colouriser" (that's their spelling, not mine)
-    'grc' :se
-
+    'proxychains' f:q # proxychains 4.4.0
+    'torsocks' idq:upaP # Torsocks 2.3.0
+    'torify' idq:upaP # Torsocks 2.3.0
+    'ssh-agent' aEPt:csDd:k # As of OpenSSH 8.1p1
+    'tabbed' gnprtTuU:cdfhs:v # suckless-tools v44
+    'chronic' :ev # moreutils 0.62-1
+    'ifne' :n # moreutils 0.62-1
+    'grc' :se # grc - a "generic colouriser" (that's their spelling, not mine)
+    'cpulimit' elp:ivz # cpulimit 0.2
+    'ktrace' fgpt:aBCcdiT
+    'caffeinate' tw:dimsu # as of macOS's caffeinate(8) dated November 9, 2012
   )
   # Commands that would need to skip one positional argument:
   #    flock
   #    ssh
+  #    _wanted (skip two)
 
   if [[ $zsyh_user_options[ignorebraces] == on || ${zsyh_user_options[ignoreclosebraces]:-off} == on ]]; then
     local right_brace_is_recognised_everywhere=false
