@@ -21,7 +21,7 @@ DEV_TOOLS=(
     htop btop ncdu duf glances
     tree eza bat fd-find ripgrep zoxide
     jq yq git-delta hexyl
-    tmux lazygit direnv entr hyperfine tldr shellcheck
+    tmux lazygit direnv entr hyperfine tldr shellcheck thefuck
     httpie mtr gh
     lazydocker dive k9s
 )

@@ -58,6 +58,7 @@ brew "hyperfine"
 brew "tldr"
 brew "shellcheck"
 brew "watch"     # 리눅스는 기본 탑재, mac만 설치
+brew "thefuck"   # 직전 커맨드 오타 교정 ('fuck' 입력)
 
 # 네트워크/컨테이너
 brew "httpie"

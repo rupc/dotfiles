@@ -56,7 +56,7 @@ pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 �
 | 시스템 모니터링 | `htop` · `btop` · `ncdu` · `duf` · `glances` · `mactop`/`asitop`(**mac 전용**) |
 | 파일 탐색/검색 | `tree` · `eza`(ls) · `bat`(cat) · `fd`(find) · `ripgrep`(grep) · `zoxide`(디렉토리 점프 `z`) |
 | 텍스트/데이터 | `jq` · `yq` · `git-delta` · `hexyl` |
-| 워크플로우 | `tmux` · `lazygit` · `direnv` · `entr` · `hyperfine` · `tldr` · `shellcheck` · `watch`(mac만 설치) |
+| 워크플로우 | `tmux` · `lazygit` · `direnv` · `entr` · `hyperfine` · `tldr` · `shellcheck` · `thefuck`(오타 교정) · `watch`(mac만 설치) |
 | 네트워크/컨테이너 | `httpie` · `mtr` · `lazydocker` · `dive` · `k9s` |
 
 - zsh에서 `zoxide`(`z`)와 `direnv` 훅은 설치되어 있을 때만 자동 로드된다 (zshrc 6-1절)

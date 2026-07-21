@@ -163,6 +163,8 @@ fi
 command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 # direnv: 디렉토리 진입 시 .envrc 자동 로드
 command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
+# thefuck: 오타 난 직전 커맨드 교정 (오타 후 'fuck' 입력)
+command -v thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)"
 
 # -----------------------------------------------------------------------------
 # 7. (안전장치) 혹시 누가 프롬프트를 또 덮으면 Pure로 다시 되돌리기
