@@ -45,6 +45,15 @@ BREW_BIN="$(brew --prefix)/bin"
 [ -e "$BREW_BIN/python" ] || ln -s "$BREW_BIN/python3" "$BREW_BIN/python"
 [ -e "$BREW_BIN/pip" ] || ln -s "$BREW_BIN/pip3" "$BREW_BIN/pip"
 
+# Tailscale: DMG로 설치한 앱의 내장 CLI를 PATH에 노출
+# (심링크는 번들 식별 검사에 걸려서 안 됨 — 원본 경로로 exec하는 래퍼 사용.
+#  brew tailscale을 설치하면 데몬이 중복되므로 앱 설치와 병행 금지)
+TS_APP_CLI="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+if [ -x "$TS_APP_CLI" ] && [ ! -e "$BREW_BIN/tailscale" ]; then
+    printf '#!/bin/sh\nexec "%s" "$@"\n' "$TS_APP_CLI" > "$BREW_BIN/tailscale"
+    chmod +x "$BREW_BIN/tailscale"
+fi
+
 # 7. nvm 작업 디렉토리 + docker compose CLI 플러그인 연결
 mkdir -p "$HOME/.nvm"
 mkdir -p "$HOME/.docker/cli-plugins"
