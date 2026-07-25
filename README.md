@@ -15,7 +15,7 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles
 ```
 
 스크립트 하나로 패키지 설치(macOS: [Brewfile](Brewfile), 리눅스: apt), oh-my-zsh,
-pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 재현된다.
+pure prompt, vim 플러그인(vim-plug), chezmoi 배포까지 전부 재현된다.
 두 스크립트 모두 재실행해도 안전하다(idempotent).
 
 ## 구조
@@ -25,8 +25,10 @@ pure prompt, vim 플러그인(Vundle + vim-plug), chezmoi 배포까지 전부 �
   (Homebrew, pnpm, fzf, clipboard, CUDA 등)만 if 분기.
 - 수정은 항상 이 저장소에서 하고 `chezmoi apply`로 홈에 배포한다. (`~/.zshrc` 직접 수정 금지)
 - zsh 플러그인(zsh-autosuggestions 등)은 `dot_oh-my-zsh/custom/plugins/`에 스냅샷으로 포함.
-- vim은 Vundle(`~/.vim/bundle`)과 vim-plug(`~/.vim/plugged`)를 둘 다 사용하며,
-  nvim은 `~/.vimrc`를 그대로 source 한다. LSP는 coc.nvim 담당.
+- vim 플러그인은 **vim-plug 하나로 통합**(`~/.vim/plugged`)되어 있으며, nvim은
+  `~/.vimrc`를 그대로 source 한다. LSP·자동완성·진단은 coc.nvim이 단독 담당
+  (과거의 Vundle/deoplete/syntastic/snipmate는 2026-07에 제거). 파일 탐색은
+  ctrlp 대신 fzf.vim(`<C-p>`=Files).
 
 ## 주요 커맨드라인 툴 설치 (macOS / Linux)
 

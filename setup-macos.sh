@@ -24,7 +24,6 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
 fi
 [ -d "$HOME/.zsh/pure" ] || git clone --depth=1 https://github.com/sindresorhus/pure.git "$HOME/.zsh/pure"
-[ -d "$HOME/.vim/bundle/Vundle.vim" ] || git clone --depth=1 https://github.com/VundleVim/Vundle.vim.git "$HOME/.vim/bundle/Vundle.vim"
 [ -f "$HOME/.vim/autoload/plug.vim" ] || curl -fsSLo "$HOME/.vim/autoload/plug.vim" --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
@@ -36,8 +35,7 @@ mkdir -p "$HOME/.config/chezmoi"
 [ -f "$HOME/.config/chezmoi/chezmoi.toml" ] || printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
 chezmoi apply
 
-# 5. vim/nvim 플러그인 설치 (Vundle + vim-plug 둘 다 사용 중)
-nvim --headless "+PluginInstall" "+qall" || true
+# 5. vim/nvim 플러그인 설치 (vim-plug로 통합됨)
 nvim --headless "+PlugInstall --sync" "+qall" || true
 
 # 6. python/pip 심링크 (brew는 python3/pip3만 제공)
