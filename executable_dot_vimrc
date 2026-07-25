@@ -571,19 +571,14 @@ filetype plugin indent on
 call plug#begin('~/.vim/plugged')
 
 " ---- Vundle에서 이전 (2026-07 vim-plug 통합) ----
-Plug 'regedarek/ZoomWin'
 Plug 'majutsushi/tagbar'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-surround'
 Plug 'scrooloose/nerdcommenter'
 Plug 'vimwiki/vimwiki'
-Plug 'mattn/calendar-vim'
 Plug 'derekwyatt/vim-fswitch'
 Plug 'AndrewRadev/splitjoin.vim'
-Plug 'mileszs/ack.vim'
 Plug 'Raimondi/delimitMate'
-Plug 'mattn/emmet-vim'
-Plug 'alvan/vim-closetag'
 Plug 'tpope/vim-tbone'
 Plug 'honza/vim-snippets'
 Plug 'antoyo/vim-licenses'
@@ -595,16 +590,6 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() } }
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'vim-jp/vim-cpp'
 Plug 'vim-scripts/DoxygenToolkit.vim'
-Plug 'leafgarland/typescript-vim'
-Plug 'moll/vim-node'
-Plug 'pangloss/vim-javascript'
-Plug 'othree/html5.vim'
-Plug 'derekwyatt/vim-scala'
-Plug 'jalcine/cmake.vim'
-Plug 'artoj/qmake-syntax-vim'
-Plug 'shirk/vim-gas'
-Plug 'lervag/vimtex'
-Plug 'pearofducks/ansible-vim'
 " 테마
 Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'ojroques/vim-oscyank'
@@ -613,7 +598,6 @@ Plug 'projekt0n/github-nvim-theme'
 Plug 'kaicataldo/material.vim', { 'branch': 'main' }
 
 " Plug 'ycm-core/YouCompleteMe'
-Plug 'tomlion/vim-solidity'
 Plug 'NLKNguyen/papercolor-theme'
 " LanguageClient-neovim: 프로젝트 archived + Apple Silicon 바이너리 없음.
 " LSP는 coc.nvim이 담당하므로 비활성화 (필요시 주석 해제, linux에서만 동작)
@@ -625,8 +609,6 @@ Plug 'NLKNguyen/papercolor-theme'
 " Shorthand notation; fetches https://github.com/junegunn/vim-easy-align
 Plug 'junegunn/vim-easy-align'
 
-" Any valid git URL is allowed
-Plug 'https://github.com/junegunn/vim-github-dashboard.git'
 
 " Multiple Plug commands can be written in a single line using | separators
 " --> Bug founds when executing python
@@ -634,7 +616,6 @@ Plug 'SirVer/ultisnips'
 
 " On-demand loading
 Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
-Plug 'tpope/vim-fireplace', { 'for': 'clojure' }
 
 
 " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
@@ -774,7 +755,6 @@ let g:cpp_experimental_template_highlight = 1
 let c_no_curly_error=1
 "autocmd ShellCmdPost * :normal ``z.
 "let g:javascript_plugin_jsdoc = 1
-let g:closetag_filenames = "*.html,*.xhtml,*.phtml"
 " g++ compile settings
 " library to be used
 let bindir="/home/astral/work/bin/"
@@ -938,7 +918,6 @@ colorscheme PaperColor
 " let g:airline_theme='deep_space'
 
 
-let g:ackprg = 'ag --nogroup --nocolor --column'
 
 " register mapping
 nnoremap <a-r><a-0> "0p
@@ -1112,9 +1091,6 @@ endif
 
 
 
-let g:ale_fixers = {
-  \ 'javascript': ['eslint']
-  \ }
 
 
 
@@ -1128,7 +1104,6 @@ hi Folded ctermbg=242
 " autocmd BufReadPost quickfix nnoremap <buffer> <CR> <CR>
 
 " Toggle a window to full size and re-store prev windows
-nnoremap <c-w><c-o> :ZoomWin<cr>
 
 
 " Set ultisnips triggers
@@ -1143,7 +1118,6 @@ inoremap <silent><expr> <cr> "\<c-g>u\<CR>"
 
 
 " yaml syntax support for ansible 
-au BufRead,BufNewFile */playbooks/*.yml set filetype=yaml.ansible
 filetype plugin indent on    " required
 
 
@@ -1163,7 +1137,7 @@ nnoremap <A-k> <C-w>k
 nnoremap <A-l> <C-w>l
 
 function! ExecuteAckOnWord()
-    let cmd=':Ack '.expand('<cword>')
+    let cmd=':Rg '.expand('<cword>')
     execute cmd
 endfunction
 nnoremap <leader>ak :call ExecuteAckOnWord()<cr>
