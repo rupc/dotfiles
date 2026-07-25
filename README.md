@@ -29,6 +29,11 @@ pure prompt, vim 플러그인(vim-plug), chezmoi 배포까지 전부 재현된�
   `~/.vimrc`를 그대로 source 한다. LSP·자동완성·진단은 coc.nvim이 단독 담당
   (과거의 Vundle/deoplete/syntastic/snipmate는 2026-07에 제거). 파일 탐색은
   ctrlp 대신 fzf.vim(`<C-p>`=Files).
+- coc 확장은 vimrc의 `g:coc_global_extensions`에 선언되어 **nvim 첫 실행 때 자동
+  설치**된다: pyright(python) · rust-analyzer · clangd(C++/CUDA) · yaml(k8s 스키마
+  검증 내장) · json · toml · docker · sh · snippets. go는 vim-go의 gopls를 쓰므로
+  coc-go는 넣지 않는다(이중 실행 방지). k8s 매니페스트 경로 패턴은
+  `coc-settings.json`의 `yaml.schemas`에 정의.
 
 ## 주요 커맨드라인 툴 설치 (macOS / Linux)
 

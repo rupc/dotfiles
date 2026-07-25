@@ -590,6 +590,12 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() } }
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'vim-jp/vim-cpp'
 Plug 'vim-scripts/DoxygenToolkit.vim'
+" 언어별 (현재 스택: python / go / rust / CUDA C++ / k8s·docker)
+Plug 'Vimjas/vim-python-pep8-indent'   " PEP8 들여쓰기
+Plug 'bfrg/vim-cuda-syntax'            " .cu/.cuh 커널 하이라이트 (vllm/lmcache)
+Plug 'uarun/vim-protobuf'              " .proto (gRPC/ray)
+Plug 'towolf/vim-helm'                 " helm 차트 템플릿 filetype
+
 " 테마
 Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'ojroques/vim-oscyank'
@@ -622,6 +628,19 @@ Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" coc 확장 자동 설치 — 새 머신에서 nvim 첫 실행 시 자동으로 깔림 (수동 :CocInstall 불필요)
+" go는 vim-go가 gopls를 띄우므로 coc-go는 넣지 않음 (이중 실행 방지)
+let g:coc_global_extensions = [
+    \ 'coc-pyright',
+    \ 'coc-rust-analyzer',
+    \ 'coc-clangd',
+    \ 'coc-yaml',
+    \ 'coc-json',
+    \ 'coc-toml',
+    \ 'coc-docker',
+    \ 'coc-sh',
+    \ 'coc-snippets',
+    \ ]
 
 " Plugin outside ~/.vim/plugged with post-update hook
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
