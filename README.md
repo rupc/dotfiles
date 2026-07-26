@@ -24,6 +24,30 @@ cd ~/work/dotfiles
   있고 zshrc/vimrc가 모든 툴을 "있을 때만" 로드하므로, 도구가 없어도 깨지지 않는다.
 - 모든 스크립트는 재실행해도 안전하다(idempotent).
 
+## 컨테이너 개발환경 (devbox)
+
+docker만 있으면 어떤 머신에서든 완전히 동일한 터미널 환경을 띄운다. 컨테이너 빌드가
+`setup-shell.sh`/`setup-nvim.sh`를 그대로 재사용하므로 로컬과 컨테이너가 같은 소스에서
+재현된다. 상세는 [containers/README.md](containers/README.md).
+
+```sh
+# 1) 빌드 (최초 1회 또는 dotfiles 수정 후 — vim 플러그인/coc LSP까지 이미지에 구워짐)
+containers/build.sh                 # -> rupc/devbox:latest (약 2.8GB)
+
+# 2) 실행 — 지정 디렉토리가 /workspace로 마운트됨
+containers/run.sh                   # 현재 디렉토리에서 zsh 진입
+containers/run.sh ~/work/myproj     # 특정 프로젝트에서
+
+# 3) 원격 서버에 배포 (레지스트리 없이)
+docker save rupc/devbox:latest | ssh 서버 docker load
+```
+
+- 컨테이너 안: pure 프롬프트 + zsh 플러그인 + nvim(coc 확장 9개 사전 설치) + 노트북
+  커널 + python/go/node 런타임 — 로컬과 동일
+- `--rm` 실행이라 환경은 불변, 작업물은 마운트한 디렉토리에만 남는다
+- VSCode/devcontainer CLI: `containers/devcontainer.json`을 프로젝트의
+  `.devcontainer/`에 복사하면 "Reopen in Container"로 사용 가능
+
 ## Jupyter 노트북 (ipynb를 nvim 안에서 실행 + 그래프 인라인)
 
 molten-nvim + image.nvim + jupytext 조합. **그래프 렌더링은 kitty 터미널에서 동작**
