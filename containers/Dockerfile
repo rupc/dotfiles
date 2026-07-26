@@ -49,8 +49,10 @@ WORKDIR /home/$USERNAME
 
 # --- dotfiles 반입 + 셋업 스크립트 재사용 (패키지는 위에서 설치했으므로 SKIP) ---
 COPY --chown=$USERNAME:$USERNAME . /home/$USERNAME/work/dotfiles
+# go clean: gopls 빌드가 남기는 모듈/빌드 캐시(수 GB)를 같은 레이어에서 제거
 RUN SKIP_PACKAGES=1 ~/work/dotfiles/setup-shell.sh \
-    && SKIP_PACKAGES=1 ~/work/dotfiles/setup-nvim.sh
+    && SKIP_PACKAGES=1 ~/work/dotfiles/setup-nvim.sh \
+    && go clean -cache -modcache 2>/dev/null || true
 
 # --- 셋업 결과 검증 (스크립트 내부의 `|| true`가 실패를 숨기므로 여기서 강제 확인) ---
 RUN test -d ~/.vim/plugged && test -x ~/.venvs/nvim/bin/jupytext && nvim --headless "+q"
