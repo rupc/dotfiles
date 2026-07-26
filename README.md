@@ -2,21 +2,38 @@
 
 macOS / Linux 겸용 dotfiles. [chezmoi](https://chezmoi.io) 형식(`dot_`, `private_`, `executable_` 접두사)으로 관리.
 
-## 새 머신 셋업 (OS별 시나리오)
+## 새 머신 셋업 (시나리오별)
 
 ```sh
 git clone https://github.com/rupc/dotfiles ~/work/dotfiles
-
-# macOS
-~/work/dotfiles/setup-macos.sh     # Homebrew + Brewfile 기반
-
-# Ubuntu/Debian
-~/work/dotfiles/setup-linux.sh     # apt 기반
+cd ~/work/dotfiles
 ```
 
-스크립트 하나로 패키지 설치(macOS: [Brewfile](Brewfile), 리눅스: apt), oh-my-zsh,
-pure prompt, vim 플러그인(vim-plug), chezmoi 배포까지 전부 재현된다.
-두 스크립트 모두 재실행해도 안전하다(idempotent).
+| 시나리오 | 커맨드 |
+|---|---|
+| **전체 셋업** (내 머신: 셸+에디터+런타임+docker) | mac: `./setup-macos.sh` · linux: `./setup-linux.sh` |
+| **셸 환경만** (zsh/oh-my-zsh/pure/CLI 툴) | `./setup-shell.sh` |
+| **neovim 환경만** (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
+| **공용 머신, sudo 없음** | `SKIP_PACKAGES=1 ./setup-shell.sh` 또는 `SKIP_PACKAGES=1 ./setup-nvim.sh` |
+
+- 전체 셋업 스크립트는 내부적으로 `setup-shell.sh`/`setup-nvim.sh`를 재사용한다.
+- 컴포넌트 스크립트는 자기 영역의 dotfiles만 배포한다(셸: zshrc/bashrc/oh-my-zsh,
+  nvim: vimrc/coc 설정) — 공용 머신에서 다른 사람 환경을 건드리지 않는다.
+- `SKIP_PACKAGES=1`이면 패키지 설치를 건너뛴다. zsh 플러그인은 저장소에 번들되어
+  있고 zshrc/vimrc가 모든 툴을 "있을 때만" 로드하므로, 도구가 없어도 깨지지 않는다.
+- 모든 스크립트는 재실행해도 안전하다(idempotent).
+
+## Jupyter 노트북 (ipynb를 nvim 안에서 실행 + 그래프 인라인)
+
+molten-nvim + image.nvim + jupytext 조합. **그래프 렌더링은 kitty 터미널에서 동작**
+(iTerm2는 텍스트 출력만 가능). 파이썬 의존성은 `~/.venvs/nvim` 전용 venv에 격리
+(setup-nvim.sh가 생성; pynvim/jupyter_client/ipykernel/jupytext).
+
+1. kitty에서 `nvim notebook.ipynb` — jupytext가 py:percent 포맷으로 자동 변환
+2. `,mi` (`:MoltenInit`) — 커널 선택 (기본 등록: `nvim-python`)
+3. **Ctrl+Enter** — 현재 `# %%` 셀 실행, 결과/그래프가 코드 아래 인라인 표시
+4. 기타: `,ml`(현재 줄), 비주얼 선택 후 `,mr`, `,mo`(출력 다시 보기), `,md`(출력 삭제)
+5. 저장하면 jupytext가 .ipynb로 다시 변환
 
 ## 구조
 

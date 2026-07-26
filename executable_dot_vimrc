@@ -7,6 +7,12 @@ let extension=expand('%:e')
 let parent_dir=expand('%:p:h:t')
 
 
+" python3 provider는 첫 has('python3') 호출 때 결정되므로, 어떤 체크보다 먼저
+" 전용 venv(pynvim 설치됨)를 지정해야 함 (setup-nvim.sh가 venv 생성)
+if has('nvim') && executable(expand('~/.venvs/nvim/bin/python'))
+    let g:python3_host_prog = expand('~/.venvs/nvim/bin/python')
+endif
+
 if has('python3')
     set pyx=3
     set pyxversion=3
@@ -649,6 +655,13 @@ Plug 'akinsho/toggleterm.nvim'
 
 Plug 'rust-lang/rust.vim'
 Plug 'lambdalisue/suda.vim'
+
+" 노트북(ipynb) 워크플로우 — 그래프 인라인 렌더링은 kitty/wezterm 터미널 필요
+Plug 'goerz/jupytext.vim'              " .ipynb <-> py:percent 자동 변환
+if has('nvim')
+  Plug 'benlubas/molten-nvim', { 'do': ':UpdateRemotePlugins' }  " jupyter 커널 실행
+  Plug '3rd/image.nvim'                " 이미지/그래프 인라인 렌더러
+endif
 " Unmanaged plugin (manually installed and updated)
 " Plug '~/my-prototype-plugin'
 " set guifont=DejaVu\ Sans\ Mono\ 12
@@ -1267,3 +1280,48 @@ let g:oscyank_silent = v:true
 " vim.keymap.set('v', '<leader>y', require('osc52').copy_visual)
 
 
+
+" -----------------------------------------------------------------------------
+" Jupyter 노트북 (molten-nvim + image.nvim + jupytext)
+" 사용: kitty에서 nvim으로 .ipynb 열기 -> ,mi 로 커널 시작 -> Ctrl+Enter 셀 실행
+" 파이썬 의존성은 전용 venv(~/.venvs/nvim)에 격리 (setup-nvim.sh가 생성)
+" -----------------------------------------------------------------------------
+" (g:python3_host_prog는 vimrc 최상단에서 설정 — provider 결정 시점 문제)
+if executable(expand('~/.venvs/nvim/bin/jupytext'))
+    let g:jupytext_command = expand('~/.venvs/nvim/bin/jupytext')
+endif
+let g:jupytext_fmt = 'py:percent'
+
+if has('nvim')
+    let g:molten_image_provider = 'image.nvim'
+    let g:molten_output_win_max_height = 20
+    let g:molten_auto_open_output = v:true
+    let g:molten_wrap_output = v:true
+
+lua << EOF
+local ok, image = pcall(require, 'image')
+if ok then
+  -- magick_cli: ImageMagick CLI만 필요 (luarocks 불필요)
+  image.setup({ backend = 'kitty', processor = 'magick_cli' })
+end
+EOF
+
+    " jupytext percent 포맷(# %%) 기준 현재 셀 실행
+    function! MoltenRunCell() abort
+        let l:cur_start = search('^# %%', 'bcnW')
+        let l:cur_end = search('^# %%', 'nW')
+        let l:cell_start = l:cur_start == 0 ? 1 : l:cur_start + 1
+        let l:cell_end = l:cur_end == 0 ? line('$') : l:cur_end - 1
+        if l:cell_start > l:cell_end | return | endif
+        call MoltenEvaluateRange(l:cell_start, l:cell_end)
+    endfunction
+
+    " Ctrl+Enter = 현재 셀 실행 (kitty에서 동작; 구분 못 하는 터미널은 ,rc 사용)
+    nnoremap <silent> <C-CR> :call MoltenRunCell()<CR>
+    nnoremap <silent> <leader>rc :call MoltenRunCell()<CR>
+    nnoremap <silent> <leader>mi :MoltenInit<CR>
+    nnoremap <silent> <leader>ml :MoltenEvaluateLine<CR>
+    vnoremap <silent> <leader>mr :<C-u>MoltenEvaluateVisual<CR>
+    nnoremap <silent> <leader>mo :MoltenShowOutput<CR>
+    nnoremap <silent> <leader>md :MoltenDelete<CR>
+endif

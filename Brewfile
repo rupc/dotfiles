@@ -43,6 +43,10 @@ brew "fd"        # find 대체
 brew "ripgrep"   # grep 대체 (rg)
 brew "zoxide"    # 스마트 디렉토리 점프 (z)
 
+# 노트북(ipynb in nvim) — molten-nvim 이미지 렌더링용
+brew "imagemagick"
+cask "kitty"     # 그래프 인라인 렌더링 지원 터미널
+
 # 텍스트/데이터
 brew "jq"
 brew "yq"
