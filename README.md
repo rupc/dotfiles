@@ -15,6 +15,7 @@ cd ~/work/dotfiles
 | **셸 환경만** (zsh/oh-my-zsh/pure/CLI 툴) | `./setup-shell.sh` |
 | **neovim 환경만** (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
 | **공용 머신, sudo 없음** | `SKIP_PACKAGES=1 ./setup-shell.sh` 또는 `SKIP_PACKAGES=1 ./setup-nvim.sh` |
+| **컨테이너** (docker만 있으면 어디서든 동일 환경) | `containers/build.sh` → `containers/run.sh` — [containers/README.md](containers/README.md) 참고 |
 
 - 전체 셋업 스크립트는 내부적으로 `setup-shell.sh`/`setup-nvim.sh`를 재사용한다.
 - 컴포넌트 스크립트는 자기 영역의 dotfiles만 배포한다(셸: zshrc/bashrc/oh-my-zsh,

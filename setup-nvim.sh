@@ -30,6 +30,14 @@ if [ -z "${SKIP_PACKAGES:-}" ]; then
     fi
 fi
 
+# coc.nvim은 Node 20+ 필요 (18은 전역 crypto 없음) — 구버전이면 경고
+if command -v node >/dev/null 2>&1; then
+    NODE_MAJOR=$(node --version | sed 's/^v\([0-9]*\).*/\1/')
+    if [ "$NODE_MAJOR" -lt 20 ]; then
+        echo "경고: node $(node --version) — coc.nvim은 Node 20+ 필요. nvm/NodeSource로 업그레이드 권장"
+    fi
+fi
+
 # --- 2. chezmoi ---
 if ! command -v chezmoi >/dev/null 2>&1; then
     sh -c "$(curl -fsSL get.chezmoi.io)" -- -b "$HOME/.local/bin"

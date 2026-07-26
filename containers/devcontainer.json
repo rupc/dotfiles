@@ -1,0 +1,8 @@
+{
+    "name": "rupc-devbox",
+    "image": "rupc/devbox:latest",
+    "remoteUser": "jyr",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+    "workspaceFolder": "/workspace",
+    "postAttachCommand": "zsh -l"
+}
