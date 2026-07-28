@@ -1,0 +1,2 @@
+{{/* coc.nvim 제거(2026-07)에 따라 더 이상 안 쓰는 설정 — apply 시 각 머신에서 삭제 */}}
+.config/nvim/coc-settings.json

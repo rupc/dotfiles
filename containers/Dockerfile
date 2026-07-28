@@ -26,18 +26,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/fdfind /usr/local/bin/fd
 ENV LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8
 
-# --- Node 22 (NodeSource): apt의 node 18은 전역 crypto가 없어 coc.nvim이 안 돎 ---
+# --- Node 22 (NodeSource): 일반 개발 런타임 (에디터는 더 이상 node 불필요 — coc 제거) ---
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# --- neovim: apt 버전이 낡아서 공식 릴리즈 바이너리 사용 (amd64/arm64) ---
-# 주의: ARG TARGETARCH는 클래식 빌더(colima 기본)에서 안 채워지므로 dpkg로 판별
-RUN NVIM_ARCH=$([ "$(dpkg --print-architecture)" = "arm64" ] && echo "arm64" || echo "x86_64") \
-    && curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-${NVIM_ARCH}.tar.gz" \
-       | tar xz -C /opt \
-    && ln -sf /opt/nvim-linux-*/bin/nvim /usr/local/bin/nvim \
-    && nvim --version | head -1
+# --- neovim은 setup-nvim.sh가 공식 릴리즈 바이너리를 ~/.local에 설치한다 (apt nvim은 구버전이라 안 씀) ---
 
 # --- 유저 생성 (uid 1000; ubuntu:24.04 기본 유저 제거 후 대체) ---
 RUN userdel -r ubuntu 2>/dev/null || true \
@@ -55,11 +49,12 @@ RUN SKIP_PACKAGES=1 ~/work/dotfiles/setup-shell.sh \
     && go clean -cache -modcache 2>/dev/null || true
 
 # --- 셋업 결과 검증 (스크립트 내부의 `|| true`가 실패를 숨기므로 여기서 강제 확인) ---
-RUN test -d ~/.vim/plugged && test -x ~/.venvs/nvim/bin/jupytext && nvim --headless "+q"
-
-# --- coc 확장을 빌드 타임에 미리 설치 (첫 실행 대기 제거) ---
-RUN nvim --headless "+CocInstall -sync coc-pyright coc-rust-analyzer coc-clangd coc-yaml coc-json coc-toml coc-docker coc-sh coc-snippets" "+qall" \
-    && test -s ~/.config/coc/extensions/package.json
+# nvim 0.11+ / 플러그인 / 노트북 venv / python LSP(basedpyright)까지 전부 이미지에 구워졌는지
+RUN test -d ~/.vim/plugged \
+    && test ! -d ~/.vim/plugged/coc.nvim \
+    && test -x ~/.venvs/nvim/bin/jupytext \
+    && test -x ~/.venvs/nvim/bin/basedpyright-langserver \
+    && ~/.local/bin/nvim --headless "+lua assert(vim.fn.has('nvim-0.11')==1)" "+q"
 
 WORKDIR /workspace
 CMD ["zsh", "-l"]

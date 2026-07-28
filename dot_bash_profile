@@ -291,7 +291,8 @@ export PATH=$PATH:/usr/local/go/bin
 export GOPATH=$HOME/go
 export GO111MODULE=on
 export PATH=$PATH:$GOPATH/bin
-export PATH=$PATH:$HOME/.local/bin
+# ~/.local/bin은 PATH 앞에 — setup-nvim.sh가 설치한 nvim이 시스템 구버전보다 우선
+export PATH=$HOME/.local/bin:$PATH
 
 # set GoPATH
 

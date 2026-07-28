@@ -79,7 +79,9 @@ export GOPATH=$HOME/go
 if [ -d "/usr/local/go/bin" ]; then
   export PATH="$PATH:/usr/local/go/bin"
 fi
-export PATH="$PATH:$GOPATH/bin:$HOME/.local/bin"
+# ~/.local/bin은 PATH 앞에 — setup-nvim.sh가 설치한 nvim이 공용 머신의
+# 낡은 /usr/bin/nvim보다 우선해야 함
+export PATH="$HOME/.local/bin:$PATH:$GOPATH/bin"
 
 # FZF — OS가 아니라 fzf 버전 능력으로 판단 (0.48+만 --zsh 지원)
 # vim-plug이 받은 최신 fzf(~/.fzf/bin)가 있으면 구버전 시스템 fzf보다 우선

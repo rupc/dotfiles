@@ -19,7 +19,11 @@ cd ~/work/dotfiles
 
 - 전체 셋업 스크립트는 내부적으로 `setup-shell.sh`/`setup-nvim.sh`를 재사용한다.
 - 컴포넌트 스크립트는 자기 영역의 dotfiles만 배포한다(셸: zshrc/bashrc/oh-my-zsh,
-  nvim: vimrc/coc 설정) — 공용 머신에서 다른 사람 환경을 건드리지 않는다.
+  nvim: vimrc/nvim 설정) — 공용 머신에서 다른 사람 환경을 건드리지 않는다.
+- `setup-nvim.sh`는 linux에서 nvim을 apt가 아니라 **공식 릴리즈 바이너리로
+  `~/.local`에 설치**한다(sudo 불필요). apt nvim(0.6~0.7대)은 lua API가 없어
+  플러그인 전체가 startup 에러를 내기 때문. 버전(0.11+) 미달이면 플러그인을
+  설치하기 전에 스크립트가 즉시 실패한다.
 - `SKIP_PACKAGES=1`이면 패키지 설치를 건너뛴다. zsh 플러그인은 저장소에 번들되어
   있고 zshrc/vimrc가 모든 툴을 "있을 때만" 로드하므로, 도구가 없어도 깨지지 않는다.
 - 모든 스크립트는 재실행해도 안전하다(idempotent).
@@ -31,7 +35,7 @@ docker만 있으면 어떤 머신에서든 완전히 동일한 터미널 환경�
 재현된다. 상세는 [containers/README.md](containers/README.md).
 
 ```sh
-# 1) 빌드 (최초 1회 또는 dotfiles 수정 후 — vim 플러그인/coc LSP까지 이미지에 구워짐)
+# 1) 빌드 (최초 1회 또는 dotfiles 수정 후 — vim 플러그인/LSP까지 이미지에 구워짐)
 containers/build.sh                 # -> rupc/devbox:latest (약 2.8GB)
 
 # 2) 실행 — 지정 디렉토리가 /workspace로 마운트됨
@@ -42,8 +46,8 @@ containers/run.sh ~/work/myproj     # 특정 프로젝트에서
 docker save rupc/devbox:latest | ssh 서버 docker load
 ```
 
-- 컨테이너 안: pure 프롬프트 + zsh 플러그인 + nvim(coc 확장 9개 사전 설치) + 노트북
-  커널 + python/go/node 런타임 — 로컬과 동일
+- 컨테이너 안: pure 프롬프트 + zsh 플러그인 + nvim(내장 LSP, basedpyright 사전 설치) +
+  노트북 커널 + python/go/node 런타임 — 로컬과 동일
 - `--rm` 실행이라 환경은 불변, 작업물은 마운트한 디렉토리에만 남는다
 - VSCode/devcontainer CLI: `containers/devcontainer.json`을 프로젝트의
   `.devcontainer/`에 복사하면 "Reopen in Container"로 사용 가능
@@ -68,14 +72,18 @@ molten-nvim + image.nvim + jupytext 조합. **그래프 렌더링은 kitty 터�
 - 수정은 항상 이 저장소에서 하고 `chezmoi apply`로 홈에 배포한다. (`~/.zshrc` 직접 수정 금지)
 - zsh 플러그인(zsh-autosuggestions 등)은 `dot_oh-my-zsh/custom/plugins/`에 스냅샷으로 포함.
 - vim 플러그인은 **vim-plug 하나로 통합**(`~/.vim/plugged`)되어 있으며, nvim은
-  `~/.vimrc`를 그대로 source 한다. LSP·자동완성·진단은 coc.nvim이 단독 담당
-  (과거의 Vundle/deoplete/syntastic/snipmate는 2026-07에 제거). 파일 탐색은
-  ctrlp 대신 fzf.vim(`<C-p>`=Files).
-- coc 확장은 vimrc의 `g:coc_global_extensions`에 선언되어 **nvim 첫 실행 때 자동
-  설치**된다: pyright(python) · rust-analyzer · clangd(C++/CUDA) · yaml(k8s 스키마
-  검증 내장) · json · toml · docker · sh · snippets. go는 vim-go의 gopls를 쓰므로
-  coc-go는 넣지 않는다(이중 실행 방지). k8s 매니페스트 경로 패턴은
-  `coc-settings.json`의 `yaml.schemas`에 정의.
+  `~/.vimrc`를 그대로 source 한다. LSP·자동완성·진단은 **nvim 내장 LSP**(0.11+,
+  `vim.lsp.config`)가 담당 — coc.nvim은 2026-07에 제거(Node 의존성 소멸; 과거의
+  Vundle/deoplete/syntastic/snipmate도 같은 시기 제거). 파일 탐색은 ctrlp 대신
+  fzf.vim(`<C-p>`=Files).
+- LSP 서버는 실행파일이 있을 때만 자동 연결된다: basedpyright(python,
+  setup-nvim.sh가 `~/.venvs/nvim`에 설치) · rust-analyzer · clangd(C++/CUDA).
+  go는 vim-go가 gopls를 직접 띄우므로 내장 LSP에 넣지 않는다(이중 실행 방지).
+  키맵은 coc 시절 그대로: `gd`/`gy`/`gi`/`gr`, `[g`/`]g`(진단 이동), `,rn`(rename),
+  `,f`(format), `K`(hover). 자동완성 팝업은 `<C-n>/<C-p>` 이동, `<C-y>` 확정.
+- vimrc에는 **nvim 버전 가드**가 있다: 0.11 미만의 낡은 nvim으로 열면 lua
+  플러그인·LSP를 전부 건너뛰고 경고 한 줄만 띄운다(에러 폭탄 방지). 그 경우
+  `setup-nvim.sh`를 다시 실행하면 된다.
 
 ## 주요 커맨드라인 툴 설치 (macOS / Linux)
 
@@ -87,7 +95,7 @@ molten-nvim + image.nvim + jupytext 조합. **그래프 렌더링은 kitty 터�
 | fzf | 퍼지 파인더 (Ctrl-R 등) | `brew install fzf` | `sudo apt install fzf` |
 | fzy | 퍼지 파인더 (vim 연동) | `brew install fzy` | `sudo apt install fzy` |
 | autojump | 디렉토리 점프 (`j`) | `brew install autojump` | `sudo apt install autojump` |
-| neovim | 에디터 (`vi`/`vim` alias) | `brew install neovim` | `sudo apt install neovim` |
+| neovim | 에디터 (`vi`/`vim` alias) | `brew install neovim` | 공식 릴리즈 바이너리 → `~/.local` (setup-nvim.sh가 처리; apt 버전은 너무 낡음) |
 | go | Go 런타임 | `brew install go` | `sudo apt install golang-go` |
 | node | Node.js (시스템 기본) | `brew install node` | nvm으로 설치 (`nvm install --lts`) |
 | nvm | Node 버전 관리 | `brew install nvm` + `mkdir ~/.nvm` | 공식 install.sh (`~/.nvm`에 설치) |

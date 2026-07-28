@@ -2,7 +2,7 @@
 
 이 저장소의 `setup-shell.sh` / `setup-nvim.sh` 를 **컨테이너 빌드에 그대로 재사용**해서,
 로컬 맥북·리눅스 서버·컨테이너가 전부 같은 소스에서 재현되도록 한다.
-zsh(oh-my-zsh + pure + 플러그인 전부) + neovim(vim-plug + coc LSP, 빌드 타임에
+zsh(oh-my-zsh + pure + 플러그인 전부) + neovim(vim-plug + 내장 LSP, 빌드 타임에
 사전 설치) + python/go/node 런타임이 이미지 하나에 들어 있다.
 
 ## 기존 방법들 비교 (왜 이 구성인가)
@@ -33,8 +33,8 @@ containers/run.sh                # 현재 디렉토리를 /workspace로 마운�
 containers/run.sh ~/work/myproj  # 특정 프로젝트 디렉토리로
 ```
 
-컨테이너 안은 로컬과 동일: pure 프롬프트, `z`/`j` 점프, fzf-tab, nvim LSP(coc 확장
-9개 사전 설치), `,mi` 노트북 커널까지. `--rm`이라 나가면 컨테이너는 사라지고
+컨테이너 안은 로컬과 동일: pure 프롬프트, `z`/`j` 점프, fzf-tab, nvim 내장
+LSP(basedpyright 사전 설치), `,mi` 노트북 커널까지. `--rm`이라 나가면 컨테이너는 사라지고
 **작업물은 마운트한 /workspace에만 남는다** (환경은 불변, 데이터는 밖에).
 
 ## VSCode / devcontainer CLI로 쓰기
