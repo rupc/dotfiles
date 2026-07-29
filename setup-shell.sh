@@ -62,9 +62,10 @@ fi
 command -v broot >/dev/null 2>&1 && broot --install >/dev/null 2>&1 || true
 
 # --- 4. 셸 dotfiles만 배포 ---
+# sourceDir은 항상 이 repo로 강제 — 예전 셋업이 남긴 toml이 옛 clone을 가리키는 사고 방지
 mkdir -p "$HOME/.config/chezmoi"
-[ -f "$HOME/.config/chezmoi/chezmoi.toml" ] || printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
-chezmoi apply "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.oh-my-zsh"
+printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
+chezmoi apply --source "$DOTFILES_DIR" "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.oh-my-zsh"
 
 echo ""
 echo "셸 환경 셋업 완료. 새 터미널을 열거나: exec zsh"

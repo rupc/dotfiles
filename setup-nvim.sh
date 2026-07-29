@@ -96,9 +96,11 @@ fi
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 # --- 4. vim/nvim dotfiles만 배포 ---
+# sourceDir은 항상 이 repo로 강제. 예전 셋업이 남긴 chezmoi.toml이 옛 clone을
+# 가리키면 coc 시절 vimrc가 배포되어 "client coc abnormal exit with 1"이 재발한다.
 mkdir -p "$HOME/.config/chezmoi"
-[ -f "$HOME/.config/chezmoi/chezmoi.toml" ] || printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
-chezmoi apply "$HOME/.vimrc" "$HOME/.config/nvim"
+printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
+chezmoi apply --source "$DOTFILES_DIR" "$HOME/.vimrc" "$HOME/.config/nvim"
 
 # --- 5. 전용 venv — 노트북(pynvim/jupyter/jupytext) + python LSP(basedpyright) ---
 # basedpyright는 pip 패키지 하나로 language server까지 들어와서 node가 필요 없다
@@ -116,7 +118,9 @@ if [ -x "$NVIM_VENV/bin/pip" ] && [ ! -x "$NVIM_VENV/bin/basedpyright-langserver
 fi
 
 # --- 6. 플러그인 설치/정리 + molten 원격플러그인 등록 ---
-# PlugClean!: vimrc에서 제거된 플러그인(coc.nvim 등) 디렉토리 정리
+# coc 잔재는 명시적으로 삭제 (PlugClean은 || true라 실패해도 조용히 지나가므로)
+rm -rf "$HOME/.vim/plugged/coc.nvim" "$HOME/.config/coc"
+# PlugClean!: vimrc에서 제거된 플러그인 디렉토리 정리
 "$NVIM" --headless "+PlugInstall --sync" "+PlugClean!" "+qall" || true
 "$NVIM" --headless "+UpdateRemotePlugins" "+qall" || true
 
