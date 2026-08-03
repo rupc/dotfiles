@@ -74,3 +74,6 @@ brew "mtr"
 brew "lazydocker"
 brew "dive"
 brew "k9s"
+
+# 데스크톱 유틸리티
+cask "linearmouse" # 마우스 커스터마이징 — Ctrl+휠로 확대/축소 (Scrolling → Modifier keys → Zoom)
