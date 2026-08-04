@@ -1101,6 +1101,9 @@ set timeout ttimeoutlen=50
 nnoremap <c-p> :Files<cr>
 nnoremap <a-b> :Buffers<cr>
 nnoremap <a-f> :History<cr>
+" 키워드 프로젝트 전체 검색 (ripgrep) — Tab 멀티선택 후 Enter로 quickfix에 적재
+nnoremap <leader>rg :Rg <c-r><c-w><cr>
+nnoremap <leader>/ :Rg<space>
 
 nnoremap <leader>ep :e ~/.bash_profile<cr>
 nnoremap <leader>er :e ~/.bashrc<cr>
