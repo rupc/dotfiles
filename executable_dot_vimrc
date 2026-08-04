@@ -639,8 +639,17 @@ Plug 'junegunn/vim-easy-align'
 " --> Bug founds when executing python
 Plug 'SirVer/ultisnips'
 
-" On-demand loading
-Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+" 파일 탐색기 (2026-08): nvim은 neo-tree(사이드바) + oil(디렉토리=편집 버퍼),
+" 구형 vim은 NERDTree 폴백. F7 토글은 양쪽 동일 (아래 매핑부 참고)
+if s:nvim_ok
+  Plug 'nvim-lua/plenary.nvim'         " neo-tree 의존성 (lua 유틸)
+  Plug 'MunifTanjim/nui.nvim'          " neo-tree 의존성 (UI 컴포넌트)
+  Plug 'nvim-tree/nvim-web-devicons'   " 파일타입 아이콘 — Nerd Font 필요
+  Plug 'nvim-neo-tree/neo-tree.nvim', { 'branch': 'v3.x' }
+  Plug 'stevearc/oil.nvim'
+else
+  Plug 'scrooloose/nerdtree', { 'on':  'NERDTreeToggle' }
+endif
 
 
 " Using a tagged release; wildcard allowed (requires git 1.9.2 or above)
@@ -786,24 +795,22 @@ function! CscopeConfigure()
     set cst
 endfunction
 
-" NERDTree Configurations
-" NERDTree and Directory navigation shortcuts
-"let NERDTreeMapOpenInTab='<ENTER>'
-"let NERDTreeMapOpenInTab='\r'
-" let NERDTreeQuitOnOpen = 1
-nnoremap <F7> :NERDTreeToggle<CR>
-" autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTreeType") && b:NERDTreeType == "primary") | q | endif
-let NERDTreeAutoDeleteBuffer = 1
-let NERDTreeMinimalUI = 1
-let NERDTreeDirArrows = 1
-" NerdTreeFind
-nnoremap <leader>nf :NERDTreeFind<cr>
-" TabsToggle Sucks. 너무 많이 깜빡거림...
-" nnoremap <F7> :NERDTreeTabsToggle<CR>
-"autocmd VimEnter * :NERDTreeTabsToggle 
-" Open NerdTree when vim start
-"autocmd VimEnter * :NERDTreeTabsToggle
-"autocmd TabEnter * :NERDTreeToggle<cr>
+" 파일 탐색기 매핑 — F7은 예나 지금이나 "디렉토리 트리 토글"
+if s:nvim_ok
+  nnoremap <F7> :Neotree toggle<cr>
+  " 트리에서 현재 파일 위치 찾기 (구 NERDTreeFind)
+  nnoremap <leader>nf :Neotree reveal<cr>
+  " oil: 현재 파일의 디렉토리를 편집 버퍼로 열기 — 줄 수정=rename, dd=삭제,
+  " 새 줄=파일 생성, :w로 실제 반영. 다시 -를 누르면 상위 디렉토리로.
+  nnoremap - :Oil<cr>
+else
+  " NERDTree (구형 vim 폴백)
+  nnoremap <F7> :NERDTreeToggle<CR>
+  nnoremap <leader>nf :NERDTreeFind<cr>
+  let NERDTreeAutoDeleteBuffer = 1
+  let NERDTreeMinimalUI = 1
+  let NERDTreeDirArrows = 1
+endif
 
 nnoremap E :Explore<CR>
 nnoremap <F8> :TagbarToggle<CR>
@@ -1405,6 +1412,27 @@ if rmd_ok then
   rmd.setup({
     file_types = { 'markdown' },   -- vimwiki는 자체 문법이라 제외
     completions = { lsp = { enabled = true } },
+  })
+end
+
+-- 파일 탐색기 사이드바: neo-tree (F7 토글, ,nf=현재 파일 위치) — 구 NERDTree 대체
+local neotree_ok, neotree = pcall(require, 'neo-tree')
+if neotree_ok then
+  neotree.setup({
+    close_if_last_window = true,           -- 트리만 남으면 nvim 종료
+    filesystem = {
+      follow_current_file = { enabled = true },  -- 편집 중인 파일을 트리에서 자동 추적
+      use_libuv_file_watcher = true,             -- 파일 생성/삭제 실시간 반영
+    },
+    window = { width = 34 },
+  })
+end
+
+-- oil: 디렉토리를 일반 버퍼처럼 편집해서 파일 조작 (- 로 열기, :w로 반영)
+local oil_ok, oil = pcall(require, 'oil')
+if oil_ok then
+  oil.setup({
+    view_options = { show_hidden = true },
   })
 end
 EOF
