@@ -45,6 +45,7 @@ plugins=(
   dirhistory
   extract
   forgit
+  you-should-use
   zsh-syntax-highlighting
   zsh-history-substring-search
 )
@@ -197,6 +198,67 @@ if command -v yazi >/dev/null 2>&1; then
     fi
     rm -f -- "$tmp"
   }
+fi
+
+# -----------------------------------------------------------------------------
+# 6-2. 모던 CLI 배선 + 해커 감성 (2026-08)
+# 전부 "설치되어 있을 때만" 활성화 — 없는 머신에서도 셸이 깨지지 않음.
+# 스플래시류가 거슬리면: export DOTFILES_NO_SPLASH=1
+# -----------------------------------------------------------------------------
+
+# ---- ls/cat을 모던 대체로 배선 (지금까지 설치만 되고 안 물려 있었음) ----
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --icons --group-directories-first'
+  alias ll='eza -lh --icons --git --group-directories-first'
+  alias la='eza -lah --icons --git --group-directories-first'
+  alias lt='eza --tree --level=2 --icons'
+fi
+command -v bat >/dev/null 2>&1 && alias cat='bat --paging=never'
+export BAT_THEME="Dracula"
+
+# vivid: 파일 종류별 색 정의(LS_COLORS)를 모던 테마로 — eza/fd/ls 색이 확 달라짐
+if command -v vivid >/dev/null 2>&1; then
+  _lsc="$(vivid generate tokyonight-night 2>/dev/null)" && [ -n "$_lsc" ] && export LS_COLORS="$_lsc"
+  unset _lsc
+fi
+
+# ---- fzf: fd 백엔드 + 미리보기 + 사이버 테마 ----
+if command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+fi
+export FZF_DEFAULT_OPTS="
+  --height=80% --layout=reverse --border=rounded --info=inline
+  --prompt='❯ ' --pointer='▶' --marker='✓ '
+  --color=fg:#c0caf5,bg:-1,hl:#7aa2f7
+  --color=fg+:#c0caf5,bg+:#283457,hl+:#7dcfff
+  --color=border:#3b4261,prompt:#7dcfff,pointer:#7dcfff,marker:#9ece6a,spinner:#9ece6a,info:#565f89"
+# Ctrl-T(파일): bat 미리보기 / Alt-C(디렉토리): 트리 미리보기
+export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:300 {} 2>/dev/null || eza --tree --level=2 --color=always {} 2>/dev/null' --preview-window=right:55%"
+export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --color=always --icons=always {} 2>/dev/null || ls {}'"
+
+# fzf-tab: 탭 완성에도 미리보기 (cd 후보 디렉토리 내용 표시)
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always --icons=always $realpath 2>/dev/null || ls $realpath'
+zstyle ':fzf-tab:complete:(vim|nvim|bat|cat):*' fzf-preview 'bat --color=always --style=numbers --line-range=:200 $realpath 2>/dev/null || eza -1 --color=always $realpath 2>/dev/null'
+zstyle ':fzf-tab:*' fzf-flags '--height=60%'
+
+# ---- 해커 감성 ----
+# fastfetch: 새 터미널 최상위 셸에서만 시스템 스플래시 (tmux/중첩 셸 제외)
+if [[ -o interactive ]] && [[ $SHLVL -eq 1 && -z "$TMUX" && -z "$NVIM" && -z "$DOTFILES_NO_SPLASH" ]] \
+    && command -v fastfetch >/dev/null 2>&1; then
+  fastfetch
+fi
+
+# onefetch: git repo에 cd로 들어가면 repo 요약을 ASCII 로고와 함께 표시
+if command -v onefetch >/dev/null 2>&1; then
+  _dotfiles_onefetch_cd() {
+    [[ -n "$DOTFILES_NO_SPLASH" ]] && return
+    [[ -d .git ]] || return
+    onefetch 2>/dev/null || true
+  }
+  autoload -U add-zsh-hook
+  add-zsh-hook chpwd _dotfiles_onefetch_cd
 fi
 
 # -----------------------------------------------------------------------------

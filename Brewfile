@@ -47,6 +47,9 @@ brew "zoxide"    # 스마트 디렉토리 점프 (z)
 brew "imagemagick"
 cask "kitty"     # 그래프 인라인 렌더링 지원 터미널
 
+# 터미널 아이콘 글리프 (eza --icons, 프롬프트 심볼) — 터미널 폰트로 지정해야 적용됨
+cask "font-jetbrains-mono-nerd-font"
+
 # 텍스트/데이터
 brew "jq"
 brew "yq"
@@ -74,3 +77,17 @@ brew "mtr"
 brew "lazydocker"
 brew "dive"
 brew "k9s"
+
+# --- 모던 CLI 2세대 + 해커 감성 (2026-08) ---
+brew "fastfetch"  # 새 터미널 시스템 스플래시
+brew "onefetch"   # git repo 요약 + ASCII 로고 (repo 진입 시 자동 표시)
+brew "vivid"      # LS_COLORS 테마 생성기 (eza/fd/ls 색)
+brew "procs"      # ps 대체 (컬러/트리)
+brew "dust"       # du 대체 (시각화)
+brew "sd"         # sed 대체 (직관 문법)
+brew "gping"      # ping 그래프
+brew "doggo"      # dig 대체 (컬러 DNS)
+brew "glow"       # 터미널 markdown 렌더러
+brew "bandwhich"  # 프로세스별 네트워크 사용량 (sudo bandwhich)
+brew "cmatrix"    # 매트릭스 레인 (고전)
+brew "genact"     # 가짜 해커 활동 애니메이션 (장난감)

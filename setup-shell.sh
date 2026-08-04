@@ -28,6 +28,8 @@ if [ -z "${SKIP_PACKAGES:-}" ]; then
         tmux lazygit direnv entr hyperfine tldr shellcheck thefuck
         httpie mtr gh navi broot yazi
         lazydocker dive k9s
+        fastfetch onefetch vivid procs dust sd gping doggo glow
+        bandwhich cmatrix genact
     )
     if [ "$OS" = "mac" ]; then
         brew install chezmoi fd ripgrep git-delta watch mactop asitop "${SHELL_TOOLS_COMMON[@]}" || true
@@ -43,6 +45,8 @@ if [ -z "${SKIP_PACKAGES:-}" ]; then
         command -v batcat >/dev/null 2>&1 && ln -sf "$(command -v batcat)" "$HOME/.local/bin/bat"
         command -v fdfind >/dev/null 2>&1 && ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
     fi
+    # 터미널 아이콘 글리프(eza --icons 등)용 Nerd Font — 상세는 setup-fonts.sh 참고
+    "$DOTFILES_DIR/setup-fonts.sh" || echo "경고: 폰트 셋업 실패 (아이콘 글리프 없이 계속)"
 fi
 
 # --- 2. chezmoi (패키지 매니저에 없거나 SKIP_PACKAGES면 유저 로컬에 설치) ---

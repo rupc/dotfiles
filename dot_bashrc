@@ -172,5 +172,33 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+# -----------------------------------------------------------------------------
+# 모던 CLI 배선 (zshrc §6-2 미러 — 설치되어 있을 때만 활성화)
+# -----------------------------------------------------------------------------
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --icons --group-directories-first'
+  alias ll='eza -lh --icons --git --group-directories-first'
+  alias la='eza -lah --icons --git --group-directories-first'
+  alias lt='eza --tree --level=2 --icons'
+fi
+command -v bat >/dev/null 2>&1 && alias cat='bat --paging=never'
+export BAT_THEME="Dracula"
+if command -v vivid >/dev/null 2>&1; then
+  _lsc="$(vivid generate tokyonight-night 2>/dev/null)" && [ -n "$_lsc" ] && export LS_COLORS="$_lsc"
+  unset _lsc
+fi
+if command -v fd >/dev/null 2>&1; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+fi
+export FZF_DEFAULT_OPTS="
+  --height=80% --layout=reverse --border=rounded --info=inline
+  --prompt='❯ ' --pointer='▶' --marker='✓ '
+  --color=fg:#c0caf5,bg:-1,hl:#7aa2f7
+  --color=fg+:#c0caf5,bg+:#283457,hl+:#7dcfff
+  --color=border:#3b4261,prompt:#7dcfff,pointer:#7dcfff,marker:#9ece6a,spinner:#9ece6a,info:#565f89"
+command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
+
 
 
