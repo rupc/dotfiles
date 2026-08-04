@@ -604,6 +604,11 @@ Plug 'antoyo/vim-licenses'
 Plug 'junegunn/fzf.vim'
 " 구버전 markdown-preview.vim -> 후속작 nvim 버전 (g:mkdp_* 설정 호환)
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() } }
+if s:nvim_ok
+  " (2026-08) 마크다운 인-에디터 렌더링 — 원격/컨테이너처럼 브라우저를 못 띄우는
+  " 환경에서의 프리뷰 해법. treesitter markdown 파서 + Nerd Font 기반.
+  Plug 'MeanderingProgrammer/render-markdown.nvim'
+endif
 " 언어별
 Plug 'octol/vim-cpp-enhanced-highlight'
 Plug 'vim-jp/vim-cpp'
@@ -643,6 +648,21 @@ Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 
 " (2026-07) coc.nvim 제거 — LSP·자동완성·진단은 nvim 내장 LSP가 담당 (아래
 " "내장 LSP" 섹션). Node 의존성이 사라졌고, 구버전 nvim에서 깨질 일도 없다.
+
+" (2026-08) 하이라이팅·자동완성 현대화
+if s:nvim_ok
+  " 신택스 하이라이팅: regex syntax 대신 treesitter 파서.
+  " (2026-08) frozen master가 nvim 0.12에서 markdown injection 크래시를
+  " 일으켜(match가 노드 리스트로 바뀐 API 변화 미반영) 재작성판 main으로 이전.
+  " 파서 설치에 tree-sitter CLI 필요 — setup-nvim.sh가 설치.
+  Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate' }
+  " 자동완성: nvim-cmp — LSP/ultisnips/버퍼단어/파일경로 소스 + 문서 미리보기
+  Plug 'hrsh7th/nvim-cmp'
+  Plug 'hrsh7th/cmp-nvim-lsp'
+  Plug 'hrsh7th/cmp-buffer'
+  Plug 'hrsh7th/cmp-path'
+  Plug 'quangnguyen30192/cmp-nvim-ultisnips'
+endif
 
 " Plugin outside ~/.vim/plugged with post-update hook
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -691,6 +711,16 @@ let g:mkdp_refresh_slow = 0
 let g:mkdp_command_for_global = 0
 " set to 1, the MarkdownPreview command can be use for all files,
 " by default it just can be use in markdown file
+
+" (2026-08) 원격(ssh) 세션에서 :MarkdownPreview 쓰는 법 — 브라우저를 원격에서
+" 못 띄우므로, 고정 포트로 서버만 띄우고 URL을 에코 -> 로컬에서 포트포워딩:
+"   ssh -L 8899:localhost:8899 <호스트>  후  로컬 브라우저에서 http://localhost:8899/page/...
+" (평소 인-에디터 렌더링은 render-markdown.nvim이 담당 — 원격에서도 그냥 보임)
+if !empty($SSH_CONNECTION) || !empty($SSH_TTY)
+  let g:mkdp_open_to_the_world = 1
+  let g:mkdp_port = '8899'
+  let g:mkdp_echo_preview_url = 1
+endif
 
 let g:CSApprox_attr_map = { 'bold' : 'bold', 'italic' : '', 'sp' : '' }
 " ctags config.
@@ -849,13 +879,20 @@ autocmd Filetype c,h,hpp,cc,cpp,py,go :call DoDoxygenMapping()
 " Aha. vim makes '.md' to '.markdown'
 autocmd Filetype markdown,md nnoremap <leader>v :MarkdownPreview<cr>
 autocmd Filetype makrdown,md nnoremap <leader>c :MarkdownStop<cr>
+" 인-에디터 렌더링 토글(,mm) + glow 터미널 프리뷰(,gw) — 원격/컨테이너용
+autocmd Filetype markdown nnoremap <buffer> <leader>mm :RenderMarkdown toggle<cr>
+if executable('glow')
+  autocmd Filetype markdown nnoremap <buffer> <leader>gw :TermExec cmd="glow -p %:p"<cr>
+endif
 " Syntaxhighlight for qmake 
 autocmd BufRead,BufNewFile *.pro set filetype=qmake
 " color setting
 "autocmd Filetype vim nnoremap <leader>r :w<cr>:source %:p<cr>
 highlight Search cterm=NONE ctermfg=19 ctermbg=159
 
-set regexpengine=1
+" (2026-08) regexpengine=1(구형 엔진 강제) 해제 — 일부 syntax 파일이 느려지거나
+" 깨지는 원인이었음. 0=자동 선택. 하이라이팅 자체는 이제 treesitter가 담당.
+set regexpengine=0
 
 let asmsyntax='gas'
 let filetype_inc='gas'
@@ -1011,14 +1048,17 @@ let wiki.path = '~/vimwiki/kbase'
 let wiki.nested_syntaxes = {'python': 'python', 'c++': 'cpp', 'proto':'proto'}
 let g:vimwiki_list =
              \[{
-             \'path': '~/vimwiki/kbase/', 
-             \'path_html': '~/vimwiki/kbase/html/', 
+             \'path': '~/vimwiki/kbase/',
+             \'path_html': '~/vimwiki/kbase/html/',
              \'auto_export': 0,
              \'auto_toc':1,
-             \'auto_tags':1, 
-             \'css_name':'github-flavored.css'}, 
+             \'auto_tags':1,
+             \'css_name':'github-flavored.css'},
              \ {'path' : '~/vimwiki/diary/'}
             \]
+" (2026-08) vimwiki가 전역 *.md의 filetype을 vimwiki로 가로채지 않도록 제한 —
+" 위키 디렉토리(~/vimwiki) 밖의 .md는 ft=markdown (treesitter 하이라이팅/프리뷰 대상)
+let g:vimwiki_global_ext = 0
 
 " https://stackoverflow.com/questions/4545275/vim-close-all-buffers-but-this-one
 " nnoremap <leader>bd :w | %bd | e#<cr>
@@ -1243,7 +1283,44 @@ local servers = {
     filetypes = { 'c', 'cpp', 'cuda' },
     root_markers = { 'compile_commands.json', 'compile_flags.txt', '.git' },
   },
+  -- go: 완성·gd·진단은 여기(내장 LSP)로 통일. vim-go는 빌드/테스트/커버리지 담당
+  gopls = {
+    bin = 'gopls',
+    filetypes = { 'go', 'gomod', 'gowork', 'gotmpl' },
+    root_markers = { 'go.work', 'go.mod', '.git' },
+  },
+  -- sh: setup-nvim.sh가 설치 (node 기반). shellcheck이 PATH에 있으면 진단도 통합
+  bashls = {
+    bin = 'bash-language-server', args = { 'start' },
+    filetypes = { 'sh', 'bash' },
+    root_markers = { '.git' },
+  },
+  -- js/ts: setup-nvim.sh가 만드는 래퍼 — TS7+면 네이티브 'tsc --lsp',
+  -- 구세대 TS 머신이면 typescript-language-server 로 내부에서 분기
+  ts_ls = {
+    bin = 'ts-lsp',
+    filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+    root_markers = { 'tsconfig.json', 'jsconfig.json', 'package.json', '.git' },
+  },
+  -- yaml: k8s 매니페스트 등 스키마 검증 (helm 템플릿은 filetype=helm이라 제외됨)
+  yamlls = {
+    bin = 'yaml-language-server', args = { '--stdio' },
+    filetypes = { 'yaml' },
+    root_markers = { '.git' },
+  },
+  -- toml: Cargo.toml/pyproject.toml 스키마 검증
+  taplo = {
+    bin = 'taplo', args = { 'lsp', 'stdio' },
+    filetypes = { 'toml' },
+    root_markers = { '.git' },
+  },
 }
+
+-- nvim-cmp가 있으면 서버에 확장 completion capability 광고 (스니펫 등)
+local caps = vim.lsp.protocol.make_client_capabilities()
+local ok_cmp_lsp, cmp_lsp = pcall(require, 'cmp_nvim_lsp')
+if ok_cmp_lsp then caps = cmp_lsp.default_capabilities() end
+
 for name, s in pairs(servers) do
   local exe = find_bin(s.bin)
   if exe then
@@ -1254,22 +1331,82 @@ for name, s in pairs(servers) do
       filetypes = s.filetypes,
       root_markers = s.root_markers,
       settings = s.settings,
+      capabilities = caps,
     })
     vim.lsp.enable(name)
   end
 end
 
--- 자동완성: 내장 completion, 타이핑 중 자동 팝업 — <c-n>/<c-p> 이동, <c-y> 확정
-vim.api.nvim_create_autocmd('LspAttach', {
-  group = vim.api.nvim_create_augroup('my.lsp.completion', {}),
-  callback = function(ev)
-    local client = vim.lsp.get_client_by_id(ev.data.client_id)
-    if client and client:supports_method('textDocument/completion') then
-      vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
-    end
-  end,
-})
+-- 자동완성: nvim-cmp. 미설치 상태(첫 PlugInstall 전)면 내장 completion 폴백
+local cmp_ok, cmp = pcall(require, 'cmp')
+if cmp_ok then
+  cmp.setup({
+    snippet = {
+      expand = function(args) vim.fn['UltiSnips#Anon'](args.body) end,
+    },
+    -- <c-n>/<c-p> 이동(insert 프리셋 기본), <cr>=선택항목 확정, <c-y>=첫항목 확정
+    mapping = cmp.mapping.preset.insert({
+      ['<C-Space>'] = cmp.mapping.complete(),
+      ['<C-e>'] = cmp.mapping.abort(),
+      ['<CR>'] = cmp.mapping.confirm({ select = false }),
+      ['<C-y>'] = cmp.mapping.confirm({ select = true }),
+    }),
+    sources = cmp.config.sources({
+      { name = 'nvim_lsp' },
+      { name = 'ultisnips' },
+    }, {
+      { name = 'buffer' },
+      { name = 'path' },
+    }),
+  })
+else
+  vim.api.nvim_create_autocmd('LspAttach', {
+    group = vim.api.nvim_create_augroup('my.lsp.completion', {}),
+    callback = function(ev)
+      local client = vim.lsp.get_client_by_id(ev.data.client_id)
+      if client and client:supports_method('textDocument/completion') then
+        vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+      end
+    end,
+  })
+end
 vim.diagnostic.config({ virtual_text = true, severity_sort = true })
+
+-- 신택스 하이라이팅: treesitter (main 브랜치 API)
+-- 파서는 stdpath('data')/site 에 설치·유지된다. tree-sitter CLI가 없으면
+-- 신규 설치만 건너뛰고, 이미 설치된 파서는 CLI 없이도 동작.
+local ts_ok, ts = pcall(require, 'nvim-treesitter')
+if ts_ok and ts.install then
+  vim.g.my_ts_langs = {
+    'bash', 'python', 'lua', 'vim', 'vimdoc', 'go', 'rust',
+    'c', 'cpp', 'cuda', 'yaml', 'json', 'toml', 'proto',
+    'javascript', 'typescript', 'tsx',
+    'markdown', 'markdown_inline', 'make', 'dockerfile', 'diff',
+  }
+  if vim.fn.executable('tree-sitter') == 1 then
+    pcall(ts.install, vim.g.my_ts_langs)  -- async, 이미 설치된 파서는 no-op
+  end
+  -- main은 자동 하이라이팅이 없음 — 파서 있는 파일타입만 직접 시작
+  vim.api.nvim_create_autocmd('FileType', {
+    group = vim.api.nvim_create_augroup('my.treesitter', {}),
+    callback = function(ev)
+      if pcall(vim.treesitter.start, ev.buf) and ev.match ~= 'python' then
+        -- treesitter 들여쓰기 (python은 pep8-indent 플러그인 유지)
+        vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end
+    end,
+  })
+end
+
+-- 마크다운 인-에디터 렌더링: normal 모드에선 꾸며서 보여주고, insert 모드로
+-- 들어가면 해당 부분만 원문으로 풀림. 토글: :RenderMarkdown toggle
+local rmd_ok, rmd = pcall(require, 'render-markdown')
+if rmd_ok then
+  rmd.setup({
+    file_types = { 'markdown' },   -- vimwiki는 자체 문법이라 제외
+    completions = { lsp = { enabled = true } },
+  })
+end
 EOF
 
 " coc 시절과 같은 키맵 (K=hover는 내장 기본)
@@ -1282,6 +1419,11 @@ nnoremap <silent> ]g <cmd>lua vim.diagnostic.jump({count = 1})<cr>
 nnoremap <leader>rn <cmd>lua vim.lsp.buf.rename()<cr>
 nnoremap <leader>f <cmd>lua vim.lsp.buf.format()<cr>
 xnoremap <leader>f <cmd>lua vim.lsp.buf.format()<cr>
+
+" go 버퍼에서 vim-go의 자체 gd/omni완성 매핑을 끄고 위 내장 LSP(gopls)로 통일
+" (:GoBuild/:GoTest/:GoCoverage 등 vim-go 명령은 그대로 동작)
+let g:go_code_completion_enabled = 0
+let g:go_def_mapping_enabled = 0
 endif
 
 if s:nvim_ok
