@@ -172,7 +172,9 @@ if have chezmoi; then
     # sourceDir은 항상 이 repo로 강제 — 예전 셋업이 남긴 toml이 옛 clone을 가리키는 사고 방지
     mkdir -p "$HOME/.config/chezmoi"
     printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
-    if chezmoi apply --source "$DOTFILES_DIR" \
+    # --force: 타깃이 밖에서 수정됐을 때 뜨는 overwrite 프롬프트(/dev/tty)가
+    # 로그 리다이렉트에 가려져 무한 대기하는 것을 방지 — repo가 항상 source of truth
+    if chezmoi apply --force --source "$DOTFILES_DIR" \
         "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.oh-my-zsh" >>"$LOG" 2>&1
     then newly "셸 dotfiles (source: $DOTFILES_DIR)"; else failed "셸 dotfiles" "chezmoi apply 실패 (로그: $LOG)"; fi
 else
