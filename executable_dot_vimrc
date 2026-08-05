@@ -1194,7 +1194,11 @@ filetype plugin indent on    " required
 
 
 
-tnoremap <Esc> <C-\><C-n>
+" (2026-08) 전역 `tnoremap <Esc>` 제거 — claude/codex 같은 TUI 에이전트는 <Esc>를
+" 직접 쓴다(생성 중단, Esc 두 번=이전 메시지 되감기). 전역으로 가로채면 에이전트를
+" 멈출 방법이 없어진다. 일반 셸 터미널의 <Esc> 탈출은 toggleterm on_open에서
+" 버퍼 로컬로 되살린다(아래 참조). 그 외 터미널에선 <A-e> 또는 <C-\><C-n>.
+tnoremap <A-e> <C-\><C-n>
 tnoremap <A-h> <C-\><C-N><C-w>h
 tnoremap <A-j> <C-\><C-N><C-w>j
 tnoremap <A-k> <C-\><C-N><C-w>k
@@ -1454,11 +1458,119 @@ let g:go_code_completion_enabled = 0
 let g:go_def_mapping_enabled = 0
 endif
 
+" ----------------------------------------------------------------------------
+" toggleterm — claude/codex 같은 TUI 에이전트를 상주시키는 용도로 튜닝 (2026-08)
+" 핵심 4가지:
+"   1. terminal_mappings/insert_mappings=false — 안 끄면 toggleterm이 터미널 모드
+"      키를 가로채서 에이전트가 입력을 못 받는다.
+"   2. auto_scroll=false (에이전트 터미널만) — 출력 스트리밍 중 위로 스크롤해서
+"      읽으려 할 때마다 바닥으로 튕기는 걸 막는다.
+"   3. close_on_exit=false — 에이전트가 죽어도 마지막 에러 출력이 남는다.
+"   4. <Esc> 미개입 — 위 tnoremap 블록 주석 참조.
+" ----------------------------------------------------------------------------
 if s:nvim_ok
-lua require("toggleterm").setup()
-" autocmd TermEnter term://*toggleterm#*
-"       \ tnoremap <silent><c-t> <Cmd>exe v:count1 . "ToggleTerm"<CR>
-nnoremap <space>m :ToggleTerm<cr>
+lua << TOGGLETERM_EOF
+local toggleterm = require("toggleterm")
+local terms      = require("toggleterm.terminal")
+local Terminal   = terms.Terminal
+
+-- 에이전트 로그는 길다. 0.12부터 scrollback 상한이 100만 줄로 늘었다.
+vim.o.scrollback = vim.fn.has("nvim-0.12") == 1 and 1000000 or 100000
+
+toggleterm.setup({
+  size = function(term)
+    if term.direction == "horizontal" then return math.floor(vim.o.lines * 0.4) end
+    if term.direction == "vertical"   then return math.floor(vim.o.columns * 0.45) end
+    return 20
+  end,
+  direction      = "horizontal",
+  responsiveness = { horizontal_breakpoint = 180 },  -- 넓은 화면이면 자동 세로분할
+
+  start_in_insert = true,
+  persist_mode    = true,   -- 노멀모드로 스크롤하다 나갔다 와도 노멀모드 유지
+  persist_size    = true,
+  close_on_exit   = false,
+  shade_terminals = false,  -- 음영이 TUI 색을 뭉갠다
+
+  terminal_mappings = false,
+  insert_mappings   = false,
+
+  -- VSCode 터미널 탭 같은 상단 바
+  winbar = {
+    enabled = true,
+    name_formatter = function(t) return string.format(" %d: %s ", t.id, t:_display_name()) end,
+  },
+  float_opts = { border = "curved", winblend = 0, title_pos = "center" },
+
+  on_open = function(t)
+    vim.wo[t.window].number         = false
+    vim.wo[t.window].relativenumber = false
+    vim.wo[t.window].signcolumn     = "no"
+    -- 일반 셸 터미널에서만 <Esc> 탈출. 버퍼 로컬이라 전역 매핑보다 우선한다.
+    if not t.__agent then
+      vim.keymap.set("t", "<Esc>", [[<C-\><C-n>]], { buffer = t.bufnr })
+    end
+  end,
+})
+
+-- 전체화면 토글: direction="tab"이면 탭페이지를 통째로 먹어 진짜 풀스크린이 된다
+local home = {}
+function _G.ToggleTermZoom()
+  local t = terms.get(terms.get_focused_id() or -1, true) or terms.get_last_focused()
+  if not t then return end
+  local target
+  if t.direction == "tab" then
+    target = home[t.id] or "horizontal"
+  else
+    home[t.id] = t.direction
+    target = "tab"
+  end
+  if t:is_open() then t:close() end
+  t:change_direction(target)
+  t:open()
+end
+
+-- 에이전트 전용 터미널 (hidden=true 라 <space>m 카운트 순환에는 안 잡힌다)
+local function agent_term(cmd, name)
+  return Terminal:new({
+    cmd = cmd, display_name = name,
+    direction     = "vertical",
+    close_on_exit = false,
+    auto_scroll   = false,
+    hidden        = true,
+    __agent       = true,   -- on_open에서 <Esc>를 안 뺏기게 하는 표식
+  })
+end
+
+local claude, codex = agent_term("claude", "claude"), agent_term("codex", "codex")
+function _G.ToggleClaude() claude:toggle() end
+function _G.ToggleCodex()  codex:toggle()  end
+-- 여러 개 동시에 굴릴 때: 부를 때마다 새 인스턴스
+function _G.NewAgent(cmd)
+  Terminal:new({ cmd = cmd, display_name = cmd, direction = "vertical",
+                 close_on_exit = false, auto_scroll = false, __agent = true }):open()
+end
+TOGGLETERM_EOF
+
+" <leader>t* 는 GoTest/RustTest/:ts 가 이미 점유중이라 <space>t 네임스페이스를 쓴다
+" 열고 닫기 (2<space>m = 2번 터미널)
+nnoremap <silent> <space>m  <Cmd>execute v:count1 . "ToggleTerm"<CR>
+tnoremap <silent> <A-m>     <Cmd>ToggleTerm<CR>
+" 크기 토글 — nvim 화면 전체를 터미널로
+nnoremap <silent> <space>z  <Cmd>lua ToggleTermZoom()<CR>
+tnoremap <silent> <A-z>     <Cmd>lua ToggleTermZoom()<CR>
+" 여러 터미널 한 번에 보기 / 골라 이동 / 새로 만들기
+nnoremap <silent> <space>ta <Cmd>ToggleTermToggleAll<CR>
+tnoremap <silent> <A-a>     <Cmd>ToggleTermToggleAll<CR>
+nnoremap <silent> <space>ts <Cmd>TermSelect<CR>
+tnoremap <silent> <A-s>     <Cmd>TermSelect<CR>
+nnoremap <silent> <space>tn <Cmd>TermNew direction=vertical<CR>
+" 에이전트
+nnoremap <silent> <space>tc <Cmd>lua ToggleClaude()<CR>
+tnoremap <silent> <A-c>     <Cmd>lua ToggleClaude()<CR>
+nnoremap <silent> <space>tx <Cmd>lua ToggleCodex()<CR>
+nnoremap <silent> <space>tC <Cmd>lua NewAgent("claude")<CR>
+
 nnoremap <space>r :TermExec cmd="compgeth;"<cr>
 endif
 
