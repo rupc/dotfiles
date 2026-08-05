@@ -1,5 +1,15 @@
-# 이 저장소 셋업에 필요한 Homebrew 패키지 목록
+# 이 저장소 셋업에 필요한 Homebrew 패키지 목록 (mac 전용 — setup-macos.sh가 소비)
 # 사용법: brew bundle --file=Brewfile
+#
+# mac/linux 공용 툴은 setup-shell.sh / setup-nvim.sh에도 설치 로직이 있고,
+# setup-macos.sh는 SKIP_PACKAGES=1로 그 중복을 막는다.
+# 아래 "mac에서만" 섹션은 리눅스에 없거나 불필요한 것들 — 공용 스크립트에 넣지 말 것.
+
+# --- mac에서만 ---
+brew "mactop"    # Apple Silicon CPU/GPU 모니터
+brew "asitop"    # Apple Silicon 전력 모니터
+brew "thefuck"   # 직전 커맨드 오타 교정 ('fuck' 입력)
+                 # — apt판(3.29)은 Python 3.12+ 에서 imp 제거로 깨져 리눅스에선 미설치
 
 # 셸 & dotfiles 관리
 brew "chezmoi"
@@ -29,8 +39,6 @@ brew "gh"
 # 시스템 모니터링
 brew "htop"
 brew "btop"
-brew "mactop"    # mac 전용: Apple Silicon 모니터
-brew "asitop"    # mac 전용: Apple Silicon 전력/GPU 모니터
 brew "ncdu"
 brew "duf"
 brew "glances"
@@ -64,8 +72,7 @@ brew "entr"
 brew "hyperfine"
 brew "tldr"
 brew "shellcheck"
-brew "watch"     # 리눅스는 기본 탑재, mac만 설치
-brew "thefuck"   # 직전 커맨드 오타 교정 ('fuck' 입력)
+brew "watch"     # 리눅스는 procps에 기본 탑재 — mac만 설치가 필요할 뿐 공용 툴
 brew "atuin"     # 셸 히스토리 DB화 + Ctrl-R 퍼지검색
 brew "navi"      # Ctrl-G 커맨드 치트시트
 brew "broot"     # 디렉토리 트리 탐색/점프 (br)

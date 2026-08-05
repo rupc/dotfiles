@@ -20,6 +20,8 @@ else
 fi
 
 # 2. 전체 패키지 (Brewfile) — 컴포넌트 스크립트에는 SKIP_PACKAGES로 중복 설치 방지
+#    mac 전용 툴(mactop/asitop/thefuck)도 여기서만 설치된다.
+#    공용 스크립트(setup-shell.sh/setup-nvim.sh)에는 mac/linux 양쪽 툴만 둘 것.
 brew bundle --file="$DOTFILES_DIR/Brewfile"
 
 # 3. 셸 환경 + neovim 환경 (컴포넌트 스크립트 재사용)

@@ -176,7 +176,11 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init zsh)"
 # direnv: 디렉토리 진입 시 .envrc 자동 로드
 command -v direnv >/dev/null 2>&1 && eval "$(direnv hook zsh)"
 # thefuck: 오타 난 직전 커맨드 교정 (오타 후 'fuck' 입력)
-command -v thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)"
+# apt판(3.29)은 Python 3.12+ 에서 imp 모듈 제거로 깨짐 -> 정상 동작할 때만 로드
+if command -v thefuck >/dev/null 2>&1; then
+  _thefuck_alias="$(thefuck --alias 2>/dev/null)" && eval "$_thefuck_alias"
+  unset _thefuck_alias
+fi
 # atuin: 히스토리 DB + Ctrl-R 퍼지검색 (↑키는 history-substring-search 몫으로 남김)
 command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh --disable-up-arrow)"
 # history-substring-search: 입력 중인 단어로 ↑/↓ 히스토리 탐색

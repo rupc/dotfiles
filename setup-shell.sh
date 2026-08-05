@@ -25,14 +25,16 @@ if [ -z "${SKIP_PACKAGES:-}" ]; then
         fzf fzy autojump zoxide atuin
         htop btop ncdu duf glances
         tree eza bat jq yq hexyl
-        tmux lazygit direnv entr hyperfine tldr shellcheck thefuck
+        tmux lazygit direnv entr hyperfine tldr shellcheck
         httpie mtr gh navi broot yazi
         lazydocker dive k9s
         fastfetch onefetch vivid procs dust sd gping doggo glow
         bandwhich cmatrix genact
     )
     if [ "$OS" = "mac" ]; then
-        brew install chezmoi fd ripgrep git-delta watch mactop asitop "${SHELL_TOOLS_COMMON[@]}" || true
+        # 여기에는 mac/linux 양쪽에서 쓰는 툴만 (mac은 이름이 같아 brew 한 줄로 끝남).
+        # mac 전용 툴(mactop/asitop/thefuck 등)은 Brewfile + setup-macos.sh 담당.
+        brew install chezmoi fd ripgrep git-delta watch "${SHELL_TOOLS_COMMON[@]}" || true
     else
         sudo apt-get update
         for pkg in zsh git curl fd-find ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}"; do

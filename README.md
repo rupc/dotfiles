@@ -75,7 +75,7 @@ kitty에서 `nvim notebook.ipynb` → `,mi`(커널 선택: `nvim-python`) → **
 | 시스템 모니터링 | htop · btop · ncdu · duf · glances · mactop/asitop(mac) |
 | 파일 탐색/검색 | tree · eza(ls) · bat(cat) · fd(find) · ripgrep(grep) · zoxide |
 | 텍스트/데이터 | jq · yq · git-delta · hexyl |
-| 워크플로우 | tmux · lazygit · direnv · entr · hyperfine · tldr · shellcheck · thefuck |
+| 워크플로우 | tmux · lazygit · direnv · entr · hyperfine · tldr · shellcheck · thefuck(mac only) |
 | 네트워크/컨테이너 | httpie · mtr · lazydocker · dive · k9s |
 
 ## 셸 인터랙티브 환경
@@ -88,7 +88,7 @@ zshrc가 전부 "설치되어 있을 때만" 로드하므로 일부가 없어도
 - **oh-my-zsh 내장**: git(`gst`/`gco`/`gcmsg`) · dirhistory(Alt+←/→) · extract(`x`) ·
   autojump(`j`) · kubectl(`k`/`kgp`) · history/emoji/encode64
 - **훅 로드 툴**: pure(프롬프트) · atuin(**Ctrl-R** 히스토리 검색) · zoxide(`z`) ·
-  direnv(`.envrc`) · thefuck(`fuck`) · navi(**Ctrl-G** 치트시트) · broot(`br`) ·
+  direnv(`.envrc`) · thefuck(`fuck`, mac only) · navi(**Ctrl-G** 치트시트) · broot(`br`) ·
   yazi(`y`) · fzf(**Ctrl-T** 파일 삽입)
 
 키 정리: **Ctrl-R**=atuin · **Ctrl-T**=fzf · **Ctrl-G**=navi ·
