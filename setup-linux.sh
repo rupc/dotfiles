@@ -19,8 +19,21 @@ sudo apt-get install -y \
 # python-is-python3: python -> python3 심링크 (mac의 심링크와 동일 역할)
 
 # docker + compose (v2 플러그인, 배포판에 따라 패키지명이 다름)
-sudo apt-get install -y docker.io
-sudo apt-get install -y docker-compose-v2 || sudo apt-get install -y docker-compose-plugin || sudo apt-get install -y docker-compose
+# 이미 docker가 있으면 손대지 않는다 — 공식 저장소판(docker-ce + containerd.io)이 깔린
+# 머신에 apt의 docker.io를 얹으면 containerd 충돌로 apt가 거부하고 스크립트가 죽는다.
+if command -v docker >/dev/null 2>&1; then
+    echo "skip: docker (이미 설치됨 — $(docker --version 2>/dev/null))"
+else
+    sudo apt-get install -y docker.io
+fi
+if docker compose version >/dev/null 2>&1 || command -v docker-compose >/dev/null 2>&1; then
+    echo "skip: docker compose (이미 설치됨)"
+else
+    sudo apt-get install -y docker-compose-v2 \
+        || sudo apt-get install -y docker-compose-plugin \
+        || sudo apt-get install -y docker-compose \
+        || echo "skip: docker compose (이 배포판 apt에 없음)"
+fi
 sudo usermod -aG docker "$USER" || true
 
 # 2. 셸 환경 (CLI 툴 설치 포함) + neovim 환경 (에디터 패키지 설치 포함)
