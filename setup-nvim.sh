@@ -29,40 +29,9 @@ case "$(uname -s)" in
     *)      echo "지원하지 않는 OS"; exit 1 ;;
 esac
 
-# --- 로깅/집계 헬퍼 ---------------------------------------------------------
-if [ -t 1 ]; then
-    C_G=$'\033[32m'; C_Y=$'\033[33m'; C_R=$'\033[31m'; C_B=$'\033[1;34m'; C_0=$'\033[0m'
-else
-    C_G=""; C_Y=""; C_R=""; C_B=""; C_0=""
-fi
-step() { echo; echo "${C_B}==> $*${C_0}"; }
-ok()   { echo "  ${C_G}✓${C_0} $*"; }
-warn() { echo "  ${C_Y}!${C_0} $*"; }
-err()  { echo "  ${C_R}✗${C_0} $*"; }
-have() { command -v "$1" >/dev/null 2>&1; }
-
-ALREADY=(); NEWLY=(); SKIPPED=(); FAILED=()
-already() { ALREADY+=("$1"); ok "$1: 이미 설치됨${2:+ — $2}"; }
-newly()   { NEWLY+=("$1");   ok "$1: 설치 완료"; }
-skipped() { SKIPPED+=("$1 — $2"); warn "$1: 생략 — $2"; }
-failed()  { FAILED+=("$1 — $2");  err "$1: 실패 — $2"; }
-
-print_summary() {
-    step "요약: 이미 있음 ${#ALREADY[@]} / 새로 설치 ${#NEWLY[@]} / 생략 ${#SKIPPED[@]} / 실패 ${#FAILED[@]}"
-    _list() {
-        local title=$1; shift
-        [ "$#" -eq 0 ] && return 0
-        echo "  $title:"
-        local item; for item in "$@"; do echo "    - $item"; done
-    }
-    _list "이미 있음" ${ALREADY[@]+"${ALREADY[@]}"}
-    _list "새로 설치" ${NEWLY[@]+"${NEWLY[@]}"}
-    _list "생략 (사유)" ${SKIPPED[@]+"${SKIPPED[@]}"}
-    _list "실패 (사유)" ${FAILED[@]+"${FAILED[@]}"}
-    if [ "${#SKIPPED[@]}" -gt 0 ] || [ "${#FAILED[@]}" -gt 0 ]; then
-        echo "  → 사유(사전 요구사항 등) 해결 후 ./setup-nvim.sh 재실행하면 그 항목만 마저 설치된다."
-    fi
-}
+# --- 로깅/집계 헬퍼 (setup-shell.sh와 공용) ---------------------------------
+SETUP_SCRIPT="./setup-nvim.sh"
+source "$DOTFILES_DIR/lib-report.sh"
 
 # --- 0. 사전 요구사항 점검 --------------------------------------------------
 step "사전 요구사항 점검 (없으면 해당 컴포넌트는 아래 단계에서 '생략'으로 표시)"

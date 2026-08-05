@@ -22,6 +22,10 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
   `~/.local`에 설치**한다(sudo 불필요). 0.11 미만이면 플러그인 설치 전에 즉시 실패.
 - 모든 스크립트는 재실행해도 안전(idempotent). `SKIP_PACKAGES=1`이어도 zsh 플러그인은
   저장소에 번들되어 있고 모든 툴은 "있을 때만" 로드되므로 깨지지 않는다.
+- `setup-shell.sh`/`setup-nvim.sh`는 끝에 **요약**을 찍는다 — 이미 있음 / 새로 설치 /
+  생략(사유) / 실패(사유). 패키지 매니저 원본 출력은 `/tmp/setup-*.log`로 빠지고,
+  생략·실패한 항목만 사유를 보고 조치한 뒤 재실행하면 그것만 마저 설치된다.
+  (공용 로깅 헬퍼: `lib-report.sh`)
 
 ## 컨테이너 devbox
 

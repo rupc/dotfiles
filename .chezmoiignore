@@ -4,5 +4,7 @@ setup-macos.sh
 setup-linux.sh
 setup-shell.sh
 setup-nvim.sh
+setup-fonts.sh
+lib-report.sh
 containers
 .dockerignore
