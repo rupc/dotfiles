@@ -87,11 +87,11 @@ zshrc가 전부 "설치되어 있을 때만" 로드하므로 일부가 없어도
   zsh-completions · forgit(`ga`/`glo`/`gd` 등 git을 fzf로) · zsh-better-npm-completion
 - **oh-my-zsh 내장**: git(`gst`/`gco`/`gcmsg`) · dirhistory(Alt+←/→) · extract(`x`) ·
   autojump(`j`) · kubectl(`k`/`kgp`) · history/emoji/encode64
-- **훅 로드 툴**: pure(프롬프트) · atuin(**Ctrl-R** 히스토리 검색) · zoxide(`z`) ·
+- **훅 로드 툴**: pure(프롬프트) · zoxide(`z`) ·
   direnv(`.envrc`) · thefuck(`fuck`, mac only) · navi(**Ctrl-G** 치트시트) · broot(`br`) ·
   yazi(`y`) · fzf(**Ctrl-T** 파일 삽입)
 
-키 정리: **Ctrl-R**=atuin · **Ctrl-T**=fzf · **Ctrl-G**=navi ·
+키 정리: **Ctrl-R**=fzf 히스토리 · **Ctrl-T**=fzf 파일 · **Ctrl-G**=navi ·
 **↑/↓**=substring-search · **Tab**=fzf-tab.
 
 OS별 차이: mac은 docker 런타임으로 **colima** 사용, `python`/`pip` 심링크는 스크립트가

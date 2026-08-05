@@ -181,8 +181,6 @@ if command -v thefuck >/dev/null 2>&1; then
   _thefuck_alias="$(thefuck --alias 2>/dev/null)" && eval "$_thefuck_alias"
   unset _thefuck_alias
 fi
-# atuin: 히스토리 DB + Ctrl-R 퍼지검색 (↑키는 history-substring-search 몫으로 남김)
-command -v atuin >/dev/null 2>&1 && eval "$(atuin init zsh --disable-up-arrow)"
 # history-substring-search: 입력 중인 단어로 ↑/↓ 히스토리 탐색
 if (( ${+widgets[history-substring-search-up]} )); then
   bindkey '^[[A' history-substring-search-up

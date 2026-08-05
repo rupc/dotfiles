@@ -73,7 +73,6 @@ brew "hyperfine"
 brew "tldr"
 brew "shellcheck"
 brew "watch"     # 리눅스는 procps에 기본 탑재 — mac만 설치가 필요할 뿐 공용 툴
-brew "atuin"     # 셸 히스토리 DB화 + Ctrl-R 퍼지검색
 brew "navi"      # Ctrl-G 커맨드 치트시트
 brew "broot"     # 디렉토리 트리 탐색/점프 (br)
 brew "yazi"      # 터미널 파일 매니저 (y)

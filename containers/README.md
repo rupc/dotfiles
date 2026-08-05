@@ -61,6 +61,6 @@ docker save rupc/devbox:latest | ssh 서버 docker load
   필요하면 `run.sh`에 `-v /var/run/docker.sock:/var/run/docker.sock` 추가
 - **kitty**: GUI 터미널이라 제외 — 호스트의 kitty에서 `run.sh`로 들어오면 그래프 인라인
   렌더링도 동작한다 (kitty 그래픽 프로토콜은 ssh/컨테이너 경계를 통과함)
-- **eza/lazygit/atuin 등 apt에 없는 툴**: 이미지 경량화를 위해 제외. zshrc가 "있을 때만
+- **eza/lazygit 등 apt에 없는 툴**: 이미지 경량화를 위해 제외. zshrc가 "있을 때만
   로드"라 없어도 안 깨짐. 꼭 필요하면 Dockerfile에 추가
 - **CUDA**: GPU 개발은 `nvidia/cuda` 베이스로 별도 이미지를 파는 게 맞음 (원하면 추가 구성)
