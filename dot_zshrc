@@ -63,8 +63,27 @@ autoload -U promptinit; promptinit
 PURE_CMD_MAX_EXEC_TIME=10
 zstyle :prompt:pure:path color white
 zstyle ':prompt:pure:prompt:*' color cyan
+# ssh 접속 시 표시되는 user@host — pure 기본값 242는 어두운 배경에서 거의 안 보여서
+# 한 단계 밝은 회색으로 (숫자 = 256색 인덱스, 더 밝게 하려면 250~252)
+zstyle :prompt:pure:user color 248
+zstyle :prompt:pure:host color 248
 zstyle :prompt:pure:git:stash show yes
 prompt pure
+
+# pure 1.27.0의 psvar 리팩터링(#706) 이후로 user@host 색이 깨진다.
+# prompt_pure_state[username]에 `%F{$prompt_pure_colors[user]}%n%f...` 처럼
+# "한 번 더 펼쳐야 하는" 문자열이 들어가는데, PROMPT_SUBST는 치환을 한 번만 한다.
+# 그래서 %F{} 안이 숫자로 안 바뀌고, zsh는 못 읽은 색을 0(검정)으로 처리한다
+# → 어두운 배경에서 jyr@bsp-server-13이 통째로 안 보였음(글자는 있었다).
+# pure의 precmd 뒤에 훅을 하나 더 걸어서 색이 이미 펼쳐진 문자열로 덮어쓴다.
+_dotfiles_pure_expand_userhost() {
+  [[ -n "$prompt_pure_state[username]" ]] || return
+  local user_color=$prompt_pure_colors[user]
+  (( UID == 0 )) && user_color=$prompt_pure_colors[user:root]
+  prompt_pure_state[username]="%F{${user_color}}%n%f%F{${prompt_pure_colors[host]}}@%m%f"
+}
+autoload -U add-zsh-hook
+add-zsh-hook precmd _dotfiles_pure_expand_userhost
 
 
 
@@ -264,9 +283,11 @@ if command -v onefetch >/dev/null 2>&1; then
 fi
 
 # -----------------------------------------------------------------------------
-# 7. (안전장치) 혹시 누가 프롬프트를 또 덮으면 Pure로 다시 되돌리기
+# 7. 프롬프트 관련 주의사항
 # -----------------------------------------------------------------------------
-precmd() {
-  prompt pure
-}
+# 예전에 여기 `precmd() { prompt pure }` 안전장치가 있었는데 제거했다(2026-08).
+# pure는 precmd 훅에서 prompt_pure_set_colors로 zstyle 색을 반영하는데, 그 직후
+# precmd가 prompt pure(=prompt_pure_setup)를 또 돌리면 setup이 색 테이블을
+# 기본값으로 리셋해버린다. 그래서 user/host/path 색 지정이 전부 무시됐다.
+# 프롬프트를 덮어쓰는 놈이 생기면 그놈을 pure 로드보다 앞으로 옮길 것.
 
