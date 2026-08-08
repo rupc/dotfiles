@@ -62,7 +62,7 @@ SHELL_TOOLS_COMMON=(
     htop btop ncdu duf glances
     tree eza bat jq yq hexyl
     tmux lazygit direnv entr hyperfine tldr shellcheck
-    httpie mtr gh navi broot yazi
+    httpie mtr gh navi broot yazi rsync
     lazydocker dive k9s
     fastfetch onefetch vivid procs dust sd gping doggo glow
     bandwhich cmatrix genact

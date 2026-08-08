@@ -80,6 +80,8 @@ brew "yazi"      # 터미널 파일 매니저 (y)
 # 네트워크/컨테이너
 brew "httpie"
 brew "mtr"
+brew "rsync"     # mac 기본은 Apple 번들 구버전 openrsync — 이어받기 되는 최신판으로
+
 brew "lazydocker"
 brew "dive"
 brew "k9s"
