@@ -28,11 +28,15 @@ warn() { echo "  ${C_Y}!${C_0} $*"; }
 err()  { echo "  ${C_R}✗${C_0} $*"; }
 have() { command -v "$1" >/dev/null 2>&1; }
 
+# 항목마다 "이게 뭐 하는 물건인지" 한 줄 설명을 붙이고 싶으면 describe()를 정의해두면
+# 된다(없으면 그냥 이름만 나온다). 툴 목록을 아는 건 각 셋업 스크립트라 훅으로 뺐다.
+_desc() { command -v describe >/dev/null 2>&1 && describe "$1" || true; }
+
 ALREADY=(); NEWLY=(); SKIPPED=(); FAILED=()
-already() { ALREADY+=("$1"); ok "$1: 이미 설치됨${2:+ — $2}"; }
-newly()   { NEWLY+=("$1");   ok "$1: 설치 완료"; }
-skipped() { SKIPPED+=("$1 — $2"); warn "$1: 생략 — $2"; }
-failed()  { FAILED+=("$1 — $2");  err "$1: 실패 — $2"; }
+already() { local d; d=$(_desc "$1"); ALREADY+=("$1${d:+ — $d}"); ok "$1: 이미 설치됨${2:+ ($2)}${d:+ — $d}"; }
+newly()   { local d; d=$(_desc "$1"); NEWLY+=("$1${d:+ — $d}");   ok "$1: 설치 완료${d:+ — $d}"; }
+skipped() { local d; d=$(_desc "$1"); SKIPPED+=("$1${d:+ ($d)} — $2"); warn "$1: 생략 — $2${d:+ (${d})}"; }
+failed()  { local d; d=$(_desc "$1"); FAILED+=("$1${d:+ ($d)} — $2");  err "$1: 실패 — $2${d:+ (${d})}"; }
 
 print_summary() {
     step "요약: 이미 있음 ${#ALREADY[@]} / 새로 설치 ${#NEWLY[@]} / 생략 ${#SKIPPED[@]} / 실패 ${#FAILED[@]}"
