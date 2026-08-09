@@ -553,6 +553,34 @@ set nofoldenable
 set history=1000
 set showcmd     "show typed command in status bar
 set showmode    "show mode in status bar
+
+" ---------------------------------------------------------------------------
+" 한글 입력 (2026-08) — OS IME 대신 nvim 내장 keymap을 쓴다
+"
+" 문제: 다른 앱에서 한글로 타이핑하다 nvim으로 들어오면 맥 IME가 한글인 채라
+"   노멀 모드 단축키가 전부 씹힌다. nvim은 OS IME 상태를 알 수도 바꿀 수도
+"   없다 — ssh로 붙은 원격이면 원리적으로 불가능하다(IME는 로컬 것이므로).
+" 해결: 입력 주체를 nvim으로 가져온다. 맥은 항상 영문(ABC)으로 두고, 한글이
+"   필요하면 insert 모드에서 <C-^>로 켠다. 그러면
+"     - 노멀 모드는 언제나 영문이라 단축키가 절대 안 씹히고
+"     - 상태를 nvim이 아니까 상태줄에 표시할 수 있고
+"     - 로컬이든 ssh 원격이든 똑같이 동작한다.
+" 한계: 내장 keymap은 입력 엔진이 아니라 단순 매핑이라 조합이 timeout 기반이다
+"   (한 글자 완성 전에 다음 글자를 치면 어긋난다). 주석·커밋 메시지 정도의
+"   짧은 한글에는 충분하지만, 긴 한글 문서는 OS IME로 쓰는 게 낫다.
+" 끄려면: 아래 set keymap= 줄을 지우면 된다 (나머지는 무해)
+set keymap=korean
+set iminsert=0      " 시작은 영문 — insert 모드에서 <C-^>로 토글
+set imsearch=-1     " 검색(/)은 insert 모드의 상태를 따라간다
+
+" 상태줄에 현재 입력 모드 표시 — 한글일 때만 눈에 띄게 (없으면 영문)
+" IncSearch에 링크: 테마가 뭐든 대비가 확실한 색이라 흘려보기 어렵다
+highlight default link StatusLineIME IncSearch
+function! IMEStatus() abort
+    return &iminsert ? ' 한글 ' : ''
+endfunction
+set laststatus=2
+set statusline=%<%f\ %h%m%r%#StatusLineIME#%{IMEStatus()}%*%=%-14.(%l,%c%V%)\ %P
 set wildmenu    "completion with menu
 set wildignore=*.o,*.obj,*.bak,*.exe,*.py[co],*.swp,*~,*.pyc,.svn
 
