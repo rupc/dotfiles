@@ -356,6 +356,25 @@ fi
 echo "  … molten 원격플러그인 등록 중 (UpdateRemotePlugins)"
 "$NVIM" --headless "+UpdateRemotePlugins" "+qall" || true
 
+# --- ACP 에이전트 브리지 — agentic.nvim이 claude/gemini/codex에 붙는 통로 ---
+# 브리지가 없으면 그 provider만 못 쓰는 것이라, 하나씩 독립적으로 처리한다.
+# (에이전트 CLI 자체(claude/codex/gemini)는 각자 설치 경로가 달라 여기서 안 건드림)
+step "ACP 에이전트 브리지 (agentic.nvim용)"
+# 브리지이름:실행파일
+ACP_BRIDGES="@agentclientprotocol/claude-agent-acp:claude-agent-acp @google/gemini-cli:gemini @zed-industries/codex-acp:codex-acp"
+for entry in $ACP_BRIDGES; do
+    pkg=${entry%:*}; bin=${entry##*:}
+    if have "$bin"; then
+        already "$bin"
+    elif ! have npm; then
+        skipped "$bin(ACP 브리지)" "npm 없음 (node 설치 필요)"
+    else
+        echo "  … $pkg 설치 중 (npm -g)"
+        if npm install -g "$pkg" && have "$bin"; then newly "$bin"
+        else failed "$bin(ACP 브리지)" "npm 설치 실패 — 이 provider만 제외하고 계속"; fi
+    fi
+done
+
 # gopls (go가 있으면 — vim-go가 사용)
 if have gopls; then
     already "gopls"

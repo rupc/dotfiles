@@ -677,6 +677,10 @@ endif
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 if s:nvim_ok
   Plug 'akinsho/toggleterm.nvim'       " lua 플러그인 — nvim 0.7+ 필요
+  " (2026-08) ACP(Agent Client Protocol) 클라이언트 — claude/gemini/codex를
+  " 같은 채팅 UI에서. toggleterm의 raw TUI와 달리 선택영역·파일·진단을
+  " 컨텍스트로 넘길 수 있다. 에이전트 브리지는 setup-nvim.sh가 npm으로 설치.
+  Plug 'carlos-algms/agentic.nvim'     " nvim 0.11+ 필요
 endif
 
 
@@ -1572,6 +1576,38 @@ nnoremap <silent> <space>tx <Cmd>lua ToggleCodex()<CR>
 nnoremap <silent> <space>tC <Cmd>lua NewAgent("claude")<CR>
 
 nnoremap <space>r :TermExec cmd="compgeth;"<cr>
+
+" ----------------------------------------------------------------------------
+" agentic.nvim — ACP로 붙는 에이전트 채팅 (2026-08)
+" toggleterm의 <space>t* 는 'raw TUI를 그냥 띄운다', 여기 <space>a* 는
+" '에디터 컨텍스트를 넘겨서 붙는다'. 둘은 겹치지 않으니 같이 쓴다.
+"
+" 각 provider는 별도 브리지 바이너리가 필요하다 (setup-nvim.sh가 npm -g로 설치):
+"   claude-agent-acp / gemini(=gemini-cli) / codex-acp
+" 브리지가 없으면 그 provider만 조용히 실패하므로, 있는 것부터 쓰면 된다.
+" ----------------------------------------------------------------------------
+lua << AGENTIC_EOF
+local ok, agentic = pcall(require, "agentic")
+if ok then
+  agentic.setup({
+    -- 기본은 claude. <space>ap 로 gemini/codex 로 갈아탄다.
+    provider = "claude-agent-acp",
+  })
+
+  local map = function(mode, lhs, fn, desc)
+    vim.keymap.set(mode, lhs, fn, { silent = true, desc = "agentic: " .. desc })
+  end
+  map("n", "<space>aa", agentic.toggle,                        "사이드바 토글")
+  map("v", "<space>aa", agentic.add_selection,                 "선택영역을 컨텍스트로")
+  map("n", "<space>af", agentic.add_file,                      "현재 파일을 컨텍스트로")
+  map("n", "<space>ad", agentic.add_buffer_diagnostics,        "버퍼 진단을 컨텍스트로")
+  map("n", "<space>an", agentic.new_session,                   "새 세션")
+  map("n", "<space>ar", agentic.restore_session,               "세션 복구")
+  map("n", "<space>al", agentic.select_session,                "세션 목록")
+  map("n", "<space>ap", agentic.switch_provider,               "provider 전환")
+  map("n", "<space>ax", agentic.stop_generation,               "생성 중단")
+end
+AGENTIC_EOF
 endif
 
 "
