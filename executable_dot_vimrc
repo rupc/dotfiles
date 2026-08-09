@@ -1472,6 +1472,123 @@ if oil_ok then
     view_options = { show_hidden = true },
   })
 end
+
+-- ---------------------------------------------------------------------------
+-- PDF 보기 (2026-08)
+-- nvim은 PDF를 못 읽어서 :e foo.pdf 하면 바이너리 쓰레기가 뜬다. 둘로 나눠 해결:
+--   1) 텍스트 모드(기본)  — pdftotext로 본문만 뽑아 읽기 전용 버퍼에.
+--      ssh든 어떤 터미널이든 되고, / 검색과 y 복사가 그대로 된다.
+--   2) 이미지 모드(:PdfPage) — pdftoppm으로 페이지를 PNG로 렌더 -> image.nvim.
+--      표·그림·레이아웃을 봐야 할 때. kitty처럼 그래픽 지원 터미널에서만 의미 있음.
+-- 둘 다 poppler가 필요하다 (setup-nvim.sh가 설치: mac=poppler, apt=poppler-utils)
+-- ---------------------------------------------------------------------------
+local function pdf_pagecount(path)
+  local out = vim.fn.system({ 'pdfinfo', path })
+  return tonumber(out:match('Pages:%s+(%d+)')) or 1
+end
+
+-- 페이지를 PNG로 렌더 (같은 페이지/배율은 캐시해서 다시 안 만든다)
+local pdf_cache = vim.fn.stdpath('cache') .. '/pdfpages'
+local function pdf_render(path, page, dpi)
+  vim.fn.mkdir(pdf_cache, 'p')
+  local key = vim.fn.sha256(path):sub(1, 16) .. ('-p%d-d%d'):format(page, dpi)
+  local png = pdf_cache .. '/' .. key .. '.png'
+  if vim.fn.filereadable(png) == 1 then return png end
+  -- -singlefile: 접미사 없이 <prefix>.png 하나만 나온다 (파일명 추측이 필요 없음)
+  vim.fn.system({ 'pdftoppm', '-png', '-r', tostring(dpi),
+                  '-f', tostring(page), '-l', tostring(page),
+                  '-singlefile', path, (png:gsub('%.png$', '')) })
+  return vim.fn.filereadable(png) == 1 and png or nil
+end
+
+local function pdf_show(state)
+  local png = pdf_render(state.path, state.page, state.dpi)
+  if not png then
+    vim.notify('PDF 렌더 실패 (pdftoppm)', vim.log.levels.ERROR)
+    return
+  end
+  local img_ok, image = pcall(require, 'image')
+  if not img_ok then
+    vim.notify('image.nvim이 없어 이미지 모드를 못 쓴다 — :PdfText로 볼 것', vim.log.levels.WARN)
+    return
+  end
+  image.hijack_buffer(png, 0, 0)
+  vim.api.nvim_buf_set_name(0, ('pdf://%s [%d/%d]')
+    :format(vim.fn.fnamemodify(state.path, ':t'), state.page, state.total))
+end
+
+-- 현재 버퍼를 PDF 이미지 뷰어로 만든다
+local function pdf_image_view(path, page)
+  if vim.fn.executable('pdftoppm') == 0 then
+    vim.notify('pdftoppm 없음 — poppler 설치 필요 (./setup-nvim.sh)', vim.log.levels.ERROR)
+    return
+  end
+  local state = { path = path, page = page or 1, dpi = 150, total = pdf_pagecount(path) }
+  vim.cmd('enew')
+  local buf = vim.api.nvim_get_current_buf()
+  vim.bo[buf].bufhidden = 'wipe'
+
+  local function go(delta)
+    local p = math.min(math.max(state.page + delta, 1), state.total)
+    if p == state.page then return end
+    state.page = p
+    pdf_show(state)
+  end
+  local function zoom(factor)
+    state.dpi = math.min(math.max(math.floor(state.dpi * factor), 50), 600)
+    pdf_show(state)
+  end
+  local map = function(lhs, fn) vim.keymap.set('n', lhs, fn, { buffer = buf, silent = true }) end
+  map('<Space>', function() go(1) end);  map('n', function() go(1) end)
+  map('<BS>',    function() go(-1) end); map('p', function() go(-1) end)
+  map(']p', function() go(1) end);       map('[p', function() go(-1) end)
+  map('G',  function() state.page = state.total; pdf_show(state) end)
+  map('gg', function() state.page = 1; pdf_show(state) end)
+  map('+', function() zoom(1.25) end)
+  map('-', function() zoom(0.8) end)
+  map('q', function() vim.cmd('bdelete!') end)
+  pdf_show(state)
+end
+
+-- :e foo.pdf 를 가로채 텍스트 모드로 연다 (BufReadCmd라 원본은 안 읽는다)
+vim.api.nvim_create_autocmd('BufReadCmd', {
+  group = vim.api.nvim_create_augroup('my.pdf', {}),
+  pattern = '*.pdf',
+  callback = function(ev)
+    local path = vim.fn.fnamemodify(ev.file, ':p')
+    if vim.fn.executable('pdftotext') == 0 then
+      vim.notify('pdftotext 없음 — poppler 설치 필요 (./setup-nvim.sh)', vim.log.levels.ERROR)
+      return
+    end
+    -- -layout: 단/표의 가로 배치를 최대한 살린다. -nopgbrk: ^L 페이지 구분자 제거
+    local text = vim.fn.systemlist({ 'pdftotext', '-layout', '-nopgbrk', path, '-' })
+    vim.bo[ev.buf].modifiable = true
+    vim.api.nvim_buf_set_lines(ev.buf, 0, -1, false, text)
+    vim.bo[ev.buf].modifiable = false
+    vim.bo[ev.buf].modified   = false
+    vim.bo[ev.buf].buftype    = 'nowrite'
+    vim.bo[ev.buf].filetype   = 'text'
+    vim.b[ev.buf].pdf_path    = path
+    vim.keymap.set('n', '<localleader>pi', function() pdf_image_view(path, 1) end,
+      { buffer = ev.buf, silent = true, desc = 'PDF: 이미지 모드로' })
+  end,
+})
+
+-- :PdfPage [번호] — 이미지 모드 (인자 없으면 1쪽부터). PDF 버퍼 안이면 그 파일로.
+vim.api.nvim_create_user_command('PdfPage', function(o)
+  local path = vim.b.pdf_path or vim.fn.expand('%:p')
+  if not path:match('%.pdf$') then
+    vim.notify('PDF 버퍼가 아니다 — :e 파일.pdf 로 연 다음 실행할 것', vim.log.levels.WARN)
+    return
+  end
+  pdf_image_view(path, tonumber(o.args) or 1)
+end, { nargs = '?', desc = 'PDF를 페이지 이미지로 보기' })
+
+-- :PdfOpen — 시스템 기본 뷰어로 (주석/폼처럼 터미널로 안 되는 작업용)
+vim.api.nvim_create_user_command('PdfOpen', function()
+  local path = vim.b.pdf_path or vim.fn.expand('%:p')
+  vim.fn.jobstart({ vim.fn.has('mac') == 1 and 'open' or 'xdg-open', path }, { detach = true })
+end, { desc = 'PDF를 시스템 뷰어로 열기' })
 EOF
 
 " coc 시절과 같은 키맵 (K=hover는 내장 기본)

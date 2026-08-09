@@ -111,9 +111,12 @@ NVIM=$(nvim_bin)
 
 # --- 2. 에디터 보조 패키지 (ripgrep=:Rg, imagemagick=그래프 인라인 렌더링,
 #        진단/포맷팅용 shfmt·shellcheck는 bash-language-server가 사용) ---
-step "2/8 에디터 보조 패키지 (ripgrep·imagemagick·kitty·shellcheck·shfmt)"
+step "2/8 에디터 보조 패키지 (ripgrep·imagemagick·kitty·shellcheck·shfmt·poppler)"
+# poppler는 PDF 보기용 (pdftotext=텍스트 모드, pdftoppm=페이지 이미지 렌더).
+# 패키지명이 mac(poppler)과 데비안(poppler-utils)에서 다르다.
+POPPLER_PKG="poppler"; [ "$OS" = "linux" ] && POPPLER_PKG="poppler-utils"
 # pkg이름:확인용실행파일 (imagemagick은 v6=convert, v7=magick)
-AUX_PKGS="ripgrep:rg imagemagick:convert,magick kitty:kitty shellcheck:shellcheck shfmt:shfmt"
+AUX_PKGS="ripgrep:rg imagemagick:convert,magick kitty:kitty shellcheck:shellcheck shfmt:shfmt $POPPLER_PKG:pdftotext,pdftoppm"
 AUX_MISSING=()
 for entry in $AUX_PKGS; do
     pkg=${entry%%:*}
