@@ -15,6 +15,7 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
 | neovim 환경만 (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
 | 공용 머신, sudo 없음 | `SKIP_PACKAGES=1 ./setup-shell.sh` (또는 `setup-nvim.sh`) |
 | 컨테이너 | `containers/build.sh` → `containers/run.sh` ([상세](containers/README.md)) |
+| **지금 상태 확인** (아무것도 설치 안 함) | `./status.sh` (빠진 것만: `./status.sh --missing`) |
 
 - 전체 셋업은 내부적으로 `setup-shell.sh`/`setup-nvim.sh`를 재사용하고, 각 컴포넌트
   스크립트는 자기 영역의 dotfiles만 배포한다(공용 머신에서 남의 환경을 안 건드림).
@@ -26,6 +27,10 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
   생략(사유) / 실패(사유). 패키지 매니저 원본 출력은 `/tmp/setup-*.log`로 빠지고,
   생략·실패한 항목만 사유를 보고 조치한 뒤 재실행하면 그것만 마저 설치된다.
   (공용 로깅 헬퍼: `lib-report.sh`)
+- `status.sh`는 읽기 전용 점검이다 — 카테고리(사전 요구사항/CLI 툴/셸/neovim/LSP/
+  AI 에이전트/런타임)별로 무엇이 있고 없는지, **없다면 왜 없는지**를 찍고 마지막에
+  통계와 "사유별 묶음"을 보여준다. 사유 하나를 해결하면 몇 개가 같이 풀리는지가 보인다.
+  (툴 목록/설명은 `lib-tools.sh`에서 setup-shell.sh와 공유)
 
 ## 컨테이너 devbox
 
