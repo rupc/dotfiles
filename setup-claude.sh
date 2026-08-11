@@ -21,14 +21,30 @@
 # truth. TUI에서 바꾼 걸 살리려면 먼저 되담을 것:
 #   chezmoi re-add ~/.claude/settings.json
 #
+# 단독으로 돌려도 자립한다 — 전체 셋업에 물려 있지만, 이 스크립트만 실행해도
+# 필요한 걸 스스로 챙긴다: claude CLI, chezmoi, jq(상태줄 파서)를 없으면 설치하고,
+# ~/.local/bin이 PATH에 없으면 마지막에 알려준다(셸 rc는 setup-shell.sh 영역이라
+# 직접 고치지 않는다 — 공용 머신에서 남의 rc를 안 건드린다).
+#
 # 사용법:
-#   ./setup-claude.sh                  # CLI 없으면 설치까지
-#   SKIP_PACKAGES=1 ./setup-claude.sh  # 설정만 배포 (CLI 설치 안 함)
+#   ./setup-claude.sh                  # 없는 것만 설치 (멱등)
+#   SKIP_PACKAGES=1 ./setup-claude.sh  # 설정만 배포 (CLI/jq 설치 안 함)
 # ============================================================================
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKIP_PACKAGES="${SKIP_PACKAGES:-0}"
+
+# 아래에서 claude/chezmoi를 깔면 PATH에 ~/.local/bin을 export한다. 그러면 이
+# 스크립트 안에서는 다 통하지만 "새 셸에서도 되는가"를 못 본다. 손대기 전 값을
+# 따로 잡아두고 마지막 PATH 점검은 이걸로 한다.
+PATH_AT_START="$PATH"
+
+case "$(uname -s)" in
+    Darwin) OS="mac" ;;
+    Linux)  OS="linux" ;;
+    *)      OS="other" ;;
+esac
 
 SETUP_SCRIPT="./setup-claude.sh"
 # shellcheck source=lib-report.sh
@@ -41,10 +57,23 @@ step "사전 요구사항 점검"
 if have curl; then ok "curl"; else
     err "curl 없음 — claude CLI/chezmoi 다운로드 불가. 설치 후 재실행하라."; exit 1
 fi
-# jq는 setup-shell.sh가 깐다(SHELL_TOOLS_COMMON). 없어도 상태줄은 뜨지만
-# 경로/모델/effort를 못 읽어서 user@host 만 남는다.
-if have jq; then ok "jq"; else
-    warn "jq 없음 — 상태줄이 경로·모델·effort를 못 읽는다 (./setup-shell.sh로 설치)"
+
+# --- 1. jq -------------------------------------------------------------------
+# 상태줄이 세션 JSON을 읽는 유일한 수단이다. 없으면 경로·모델·effort·사용량이
+# 전부 빠지고 user@host만 남는다. setup-shell.sh도 깔지만(SHELL_TOOLS_COMMON),
+# 이 스크립트만 단독으로 돌리는 경우가 있어 여기서도 챙긴다.
+step "jq (상태줄 파서)"
+if have jq; then
+    already "jq"
+elif [ "$SKIP_PACKAGES" = "1" ]; then
+    skipped "jq" "SKIP_PACKAGES=1 — 상태줄이 user@host만 표시"
+elif [ "$OS" = "mac" ] && have brew; then
+    brew install jq >>"$LOG" 2>&1 && newly "jq" || failed "jq" "brew install 실패 (로그: $LOG)"
+elif [ "$OS" = "linux" ] && have sudo; then
+    sudo apt-get install -y jq >>"$LOG" 2>&1 && newly "jq" \
+        || failed "jq" "apt 설치 실패 (로그: $LOG)"
+else
+    skipped "jq" "패키지 매니저 없음 — 상태줄이 user@host만 표시"
 fi
 
 # --- 1. claude CLI ----------------------------------------------------------
@@ -109,6 +138,24 @@ if [ -x "$HOME/.claude/statusline.sh" ]; then
 else
     failed "상태줄" "~/.claude/statusline.sh 없음 — 배포 단계 실패"
 fi
+
+# --- 5. PATH 점검 -----------------------------------------------------------
+# claude와 chezmoi는 ~/.local/bin에 깔린다. 이 스크립트 안에서는 위에서 export한
+# 덕에 통하지만, 새 셸의 PATH에 없으면 'claude: command not found'가 난다.
+# (macOS 기본 zsh는 ~/.local/bin을 PATH에 안 넣는다.)
+# 셸 rc는 setup-shell.sh 영역이라 여기서 고치지 않고 알려만 준다 — 공용 머신에서
+# 남의 rc를 건드리지 않는다는 이 저장소의 방침.
+step "PATH 점검"
+case ":$PATH_AT_START:" in
+    *":$HOME/.local/bin:"*)
+        ok "~/.local/bin 이 PATH에 있음" ;;
+    *)
+        warn "~/.local/bin 이 PATH에 없다 — 새 셸에서 claude를 못 찾는다"
+        echo "     고치는 법 (둘 중 하나):"
+        echo "       ./setup-shell.sh                        # 권장 — PATH 포함 셸 설정 배포"
+        echo "       echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc"
+        ;;
+esac
 
 print_summary
 
