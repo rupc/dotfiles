@@ -121,10 +121,38 @@ why_cli() {  # $1=툴 이름
 }
 
 # --- CLI 툴 ----------------------------------------------------------------
+# 44종을 한 줄씩 쏟으면 뭐가 뭔지 안 보인다. lib-tools.sh의 기능별 묶음으로
+# 나눠 찍고, 묶음마다 몇 개가 채워졌는지(3/5)를 헤더에 붙인다.
 category "CLI 툴" "setup-shell.sh"
-for pkg in chezmoi fd ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}"; do
-    if have_any "$(tool_cmd "$pkg")"; then yes_ "$pkg"; else no_ "$pkg" "$(why_cli "$pkg")"; fi
+report_tool() {  # $1=패키지명
+    if have_any "$(tool_cmd "$1")"; then yes_ "$1"; else no_ "$1" "$(why_cli "$1")"; fi
+}
+GROUPED=""   # 어느 그룹에도 안 들어간 툴을 찾기 위한 기록
+for grp in "${TOOL_GROUPS[@]}"; do
+    gname=${grp%%|*}; gtools=${grp#*|}
+    gok=0; gtot=0
+    for pkg in $gtools; do
+        gtot=$((gtot + 1))
+        have_any "$(tool_cmd "$pkg")" && gok=$((gok + 1))
+    done
+    # --missing에서는 전부 갖춰진 묶음의 헤더까지 지운다 (볼 게 없으므로)
+    if [ "$ONLY_MISSING" != "1" ] || [ "$gok" -lt "$gtot" ]; then
+        echo "  ${C_B}── ${gname}${C_0} (${gok}/${gtot})"
+    fi
+    for pkg in $gtools; do
+        GROUPED="$GROUPED $pkg"
+        report_tool "$pkg"
+    done
 done
+# 그룹에 넣는 걸 잊은 툴 — 조용히 사라지면 안 되니 여기로 모은다
+UNGROUPED=""
+for pkg in chezmoi fd ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}"; do
+    case " $GROUPED " in *" $pkg "*) ;; *) UNGROUPED="$UNGROUPED $pkg" ;; esac
+done
+if [ -n "${UNGROUPED// /}" ]; then
+    echo "  ${C_B}── 기타${C_0} (lib-tools.sh의 TOOL_GROUPS에 아직 안 넣은 것)"
+    for pkg in $UNGROUPED; do report_tool "$pkg"; done
+fi
 
 # --- 셸 환경 ---------------------------------------------------------------
 category "셸 환경" "setup-shell.sh"

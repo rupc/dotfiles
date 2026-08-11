@@ -46,6 +46,23 @@ GH_RELEASE_TOOLS=(
     "genact|svenstaro/genact|genact-[0-9.]+-%A%-unknown-linux-musl$"
 )
 
+# 기능별 묶음 — status.sh가 "44종 나열" 대신 이 순서/그룹으로 보여준다.
+# SHELL_TOOLS_COMMON + (chezmoi fd ripgrep git-delta)의 모든 툴이 정확히 한 번씩
+# 들어가야 한다. 빠뜨린 게 있으면 status.sh가 '기타'로 몰아서 보여주니 그때 채우면 된다.
+#   형식: 그룹명|툴 툴 툴
+TOOL_GROUPS=(
+    "검색·탐색|fzf fzy fd ripgrep zoxide autojump broot yazi tree"
+    "파일 보기|eza bat hexyl glow"
+    "시스템 모니터링|htop btop glances procs fastfetch"
+    "디스크·용량|ncdu duf dust"
+    "네트워크|httpie mtr gping doggo bandwhich rsync"
+    "개발 워크플로우|tmux lazygit gh git-delta direnv entr hyperfine shellcheck onefetch"
+    "텍스트·데이터|jq yq sd tldr navi"
+    "컨테이너·쿠버네티스|lazydocker dive k9s"
+    "dotfiles·꾸미기|chezmoi vivid"
+    "장난감|cmatrix genact"
+)
+
 # 패키지 이름과 실행파일 이름이 다른 것들 (콤마 = 후보 여럿, 하나라도 있으면 설치된 것)
 # 데비안이 실행파일명을 바꿔 다는 경우(fd->fdfind, bat->batcat)까지 포함.
 tool_cmd() {
