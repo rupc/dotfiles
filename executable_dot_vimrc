@@ -1502,14 +1502,42 @@ if oil_ok then
 end
 
 -- ---------------------------------------------------------------------------
--- PDF 보기 (2026-08)
--- nvim은 PDF를 못 읽어서 :e foo.pdf 하면 바이너리 쓰레기가 뜬다. 둘로 나눠 해결:
---   1) 텍스트 모드(기본)  — pdftotext로 본문만 뽑아 읽기 전용 버퍼에.
---      ssh든 어떤 터미널이든 되고, / 검색과 y 복사가 그대로 된다.
---   2) 이미지 모드(:PdfPage) — pdftoppm으로 페이지를 PNG로 렌더 -> image.nvim.
---      표·그림·레이아웃을 봐야 할 때. kitty처럼 그래픽 지원 터미널에서만 의미 있음.
--- 둘 다 poppler가 필요하다 (setup-nvim.sh가 설치: mac=poppler, apt=poppler-utils)
+-- PDF / 이미지 보기 (2026-08)
+-- :e foo.pdf 도 :e foo.png 도 그냥 열면 바로 보인다. 따로 명령 칠 필요 없다.
+--   * .png/.jpg/.svg/... -> image.nvim이 hijack해서 그대로 렌더 (q로 닫기)
+--   * .pdf -> 그래픽 되는 터미널이면 pdftoppm으로 페이지를 렌더해서 이미지로,
+--     아니면(ssh, 기본 xterm 등) pdftotext로 뽑은 텍스트로 자동 전환.
+--     이미지에서 t = 텍스트 전환, 텍스트에서 :PdfPage = 이미지 전환.
+--     space/BS 페이지 넘김, +/- 확대, q 닫기, :PdfOpen 시스템 뷰어.
+-- PDF는 poppler가 필요하다 (setup-nvim.sh가 설치: mac=poppler, apt=poppler-utils)
 -- ---------------------------------------------------------------------------
+-- 터미널이 어떤 이미지 프로토콜을 말하는지 판단한다. 여기서 한 번만 정하고
+-- :PdfPage와 image.nvim setup(아래 molten 블록)이 같은 답을 쓴다.
+-- 이걸 안 보고 backend를 kitty로 박아두면, gnome-terminal처럼 못 알아듣는
+-- 터미널에선 그래픽 이스케이프가 그대로 글자로 쏟아져서 화면이 깨진다.
+function _G.TermGfxBackend()
+  local term, prog = vim.env.TERM or '', vim.env.TERM_PROGRAM or ''
+  -- kitty 그래픽 프로토콜을 이해하는 것들
+  if vim.env.KITTY_WINDOW_ID or vim.env.GHOSTTY_RESOURCES_DIR
+     or vim.env.KONSOLE_VERSION or term:match('kitty')
+     or prog:match('WezTerm') or prog:match('ghostty') then
+    return 'kitty'
+  end
+  -- sixel을 확실히 하는 것들
+  if term:match('foot') or term:match('mlterm') or term:match('contour') then
+    return 'sixel'
+  end
+  -- VTE(gnome-terminal)는 빌드 옵션에 따라 sixel이 되기도, 안 되기도 한다.
+  -- 확실하지 않은 쪽을 켜두면 :e foo.pdf 가 기본 경로에서 깨지므로 꺼둔다.
+  -- 확인하는 법:  convert -size 100x100 xc:red sixel:-
+  --   빨간 네모가 뜨면 아래 nil을 'sixel'로 바꾸면 gnome-terminal에서도 그림이 뜬다.
+  --   알 수 없는 글자가 쏟아지면 그대로 두고 kitty를 쓸 것.
+  if vim.env.VTE_VERSION then
+    return nil
+  end
+  return nil   -- 그래픽 불가 (ssh 기본 xterm, tty 콘솔 등)
+end
+
 local function pdf_pagecount(path)
   local out = vim.fn.system({ 'pdfinfo', path })
   return tonumber(out:match('Pages:%s+(%d+)')) or 1
@@ -1529,88 +1557,176 @@ local function pdf_render(path, page, dpi)
   return vim.fn.filereadable(png) == 1 and png or nil
 end
 
-local function pdf_show(state)
-  local png = pdf_render(state.path, state.page, state.dpi)
+-- 그림 한 장을 버퍼 전체에 띄운다.
+-- image.hijack_buffer()를 쓰지 않는 이유: 그 함수는 win:buf를 키로 이미지를
+-- 캐시해두고 어디서도 비우지 않는다. 그래서 같은 버퍼에 다른 그림을 넣으면
+-- 계속 첫 장만 다시 그린다 = PDF 페이지가 안 넘어간다. 핸들을 직접 들고 있는다.
+local shown = {}   -- buf -> Image
+local function image_into_buf(buf, png)
+  local img_ok, image = pcall(require, 'image')
+  if not img_ok then return false end
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '' })
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].modified   = false
+  vim.bo[buf].buftype    = 'nowrite'
+  if shown[buf] then pcall(function() shown[buf]:clear() end) end
+  local win = vim.fn.bufwinid(buf)
+  if win == -1 then win = vim.api.nvim_get_current_win() end
+  -- 줄번호·커서라인이 그림 위에 겹쳐 찍힌다 (hijack_buffer가 해주던 정리)
+  vim.wo[win].number, vim.wo[win].relativenumber = false, false
+  vim.wo[win].cursorline, vim.wo[win].signcolumn = false, 'no'
+  vim.wo[win].colorcolumn, vim.wo[win].list      = '', false
+  local img = image.from_file(png, { window = win, buffer = buf, x = 0, y = 0 })
+  if not img then return false end
+  shown[buf] = img
+  -- nvim file.pdf 처럼 시작하자마자 여는 경우엔 아직 창이 안 잡혀 있다
+  if vim.v.vim_did_enter == 1 then
+    img:render()
+  else
+    vim.api.nvim_create_autocmd('VimEnter', { once = true, callback = function() img:render() end })
+  end
+  return true
+end
+
+local gfx_warn = '이 터미널은 이미지를 못 그린다 — kitty에서 nvim을 열 것'
+
+local pdf_state = {}   -- buf -> { path, page, dpi, total }
+
+local function pdf_show(buf)
+  local st = pdf_state[buf]
+  if not st then return end
+  -- 렌더 돌리기 전에 막는다. 그래픽 못 하는 터미널에서 그냥 그리면
+  -- 이스케이프 시퀀스가 본문처럼 찍혀서 화면이 깨진 것처럼 보인다.
+  if not _G.TermGfxBackend() then
+    vim.notify(gfx_warn .. ' (텍스트로 보려면 :PdfText)', vim.log.levels.WARN)
+    return
+  end
+  local png = pdf_render(st.path, st.page, st.dpi)
   if not png then
     vim.notify('PDF 렌더 실패 (pdftoppm)', vim.log.levels.ERROR)
     return
   end
-  local img_ok, image = pcall(require, 'image')
-  if not img_ok then
+  if not image_into_buf(buf, png) then
     vim.notify('image.nvim이 없어 이미지 모드를 못 쓴다 — :PdfText로 볼 것', vim.log.levels.WARN)
     return
   end
-  image.hijack_buffer(png, 0, 0)
-  vim.api.nvim_buf_set_name(0, ('pdf://%s [%d/%d]')
-    :format(vim.fn.fnamemodify(state.path, ':t'), state.page, state.total))
+  vim.api.nvim_echo({ { ('%s  [%d/%d]  %ddpi  (space/BS 페이지, +/- 확대, t 텍스트, q 닫기)')
+    :format(vim.fn.fnamemodify(st.path, ':t'), st.page, st.total, st.dpi), 'ModeMsg' } }, false, {})
 end
 
--- 현재 버퍼를 PDF 이미지 뷰어로 만든다
-local function pdf_image_view(path, page)
+local pdf_text_view   -- 아래에서 서로 부른다
+local function pdf_image_view(buf, path, page)
   if vim.fn.executable('pdftoppm') == 0 then
     vim.notify('pdftoppm 없음 — poppler 설치 필요 (./setup-nvim.sh)', vim.log.levels.ERROR)
     return
   end
-  local state = { path = path, page = page or 1, dpi = 150, total = pdf_pagecount(path) }
-  vim.cmd('enew')
-  local buf = vim.api.nvim_get_current_buf()
-  vim.bo[buf].bufhidden = 'wipe'
+  pdf_state[buf] = { path = path, page = page or 1, dpi = 150, total = pdf_pagecount(path) }
+  local st = pdf_state[buf]
 
   local function go(delta)
-    local p = math.min(math.max(state.page + delta, 1), state.total)
-    if p == state.page then return end
-    state.page = p
-    pdf_show(state)
+    local p = math.min(math.max(st.page + delta, 1), st.total)
+    if p == st.page then return end
+    st.page = p
+    pdf_show(buf)
   end
   local function zoom(factor)
-    state.dpi = math.min(math.max(math.floor(state.dpi * factor), 50), 600)
-    pdf_show(state)
+    st.dpi = math.min(math.max(math.floor(st.dpi * factor), 50), 600)
+    pdf_show(buf)
   end
   local map = function(lhs, fn) vim.keymap.set('n', lhs, fn, { buffer = buf, silent = true }) end
   map('<Space>', function() go(1) end);  map('n', function() go(1) end)
   map('<BS>',    function() go(-1) end); map('p', function() go(-1) end)
   map(']p', function() go(1) end);       map('[p', function() go(-1) end)
-  map('G',  function() state.page = state.total; pdf_show(state) end)
-  map('gg', function() state.page = 1; pdf_show(state) end)
-  map('+', function() zoom(1.25) end)
+  map('<Down>', function() go(1) end);   map('<Up>', function() go(-1) end)
+  map('G',  function() st.page = st.total; pdf_show(buf) end)
+  map('gg', function() st.page = 1; pdf_show(buf) end)
+  map('+', function() zoom(1.25) end);   map('=', function() zoom(1.25) end)
   map('-', function() zoom(0.8) end)
+  map('t', function() pdf_text_view(buf, path) end)
   map('q', function() vim.cmd('bdelete!') end)
-  pdf_show(state)
+  pdf_show(buf)
 end
 
--- :e foo.pdf 를 가로채 텍스트 모드로 연다 (BufReadCmd라 원본은 안 읽는다)
+-- pdftotext로 본문만 뽑아 읽기 전용 버퍼에. / 검색과 y 복사가 그대로 된다.
+pdf_text_view = function(buf, path)
+  if vim.fn.executable('pdftotext') == 0 then
+    vim.notify('pdftotext 없음 — poppler 설치 필요 (./setup-nvim.sh)', vim.log.levels.ERROR)
+    return
+  end
+  if shown[buf] then pcall(function() shown[buf]:clear() end); shown[buf] = nil end
+  pdf_state[buf] = nil
+  -- -layout: 단/표의 가로 배치를 최대한 살린다. -nopgbrk: ^L 페이지 구분자 제거
+  local text = vim.fn.systemlist({ 'pdftotext', '-layout', '-nopgbrk', path, '-' })
+  vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, text)
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].modified   = false
+  vim.bo[buf].buftype    = 'nowrite'
+  vim.bo[buf].filetype   = 'text'
+  for _, lhs in ipairs({ '<Space>', 'n', '<BS>', 'p', ']p', '[p', '<Down>', '<Up>',
+                         'G', 'gg', '+', '=', '-', 't', 'q' }) do
+    pcall(vim.keymap.del, 'n', lhs, { buffer = buf })
+  end
+  vim.keymap.set('n', '<localleader>pi', function() pdf_image_view(buf, path, 1) end,
+    { buffer = buf, silent = true, desc = 'PDF: 이미지 모드로' })
+end
+
+-- :e foo.pdf 를 가로채 바로 연다 (BufReadCmd라 원본 바이트는 버퍼에 안 들어온다).
+-- 그래픽 되는 터미널이면 페이지 이미지, 아니면 텍스트로 자동 선택.
 vim.api.nvim_create_autocmd('BufReadCmd', {
   group = vim.api.nvim_create_augroup('my.pdf', {}),
-  pattern = '*.pdf',
+  pattern = { '*.pdf', '*.PDF' },
   callback = function(ev)
     local path = vim.fn.fnamemodify(ev.file, ':p')
-    if vim.fn.executable('pdftotext') == 0 then
-      vim.notify('pdftotext 없음 — poppler 설치 필요 (./setup-nvim.sh)', vim.log.levels.ERROR)
-      return
+    vim.b[ev.buf].pdf_path = path
+    if _G.TermGfxBackend() and vim.fn.executable('pdftoppm') == 1 and pcall(require, 'image') then
+      pdf_image_view(ev.buf, path, 1)
+    else
+      pdf_text_view(ev.buf, path)
     end
-    -- -layout: 단/표의 가로 배치를 최대한 살린다. -nopgbrk: ^L 페이지 구분자 제거
-    local text = vim.fn.systemlist({ 'pdftotext', '-layout', '-nopgbrk', path, '-' })
-    vim.bo[ev.buf].modifiable = true
-    vim.api.nvim_buf_set_lines(ev.buf, 0, -1, false, text)
-    vim.bo[ev.buf].modifiable = false
-    vim.bo[ev.buf].modified   = false
-    vim.bo[ev.buf].buftype    = 'nowrite'
-    vim.bo[ev.buf].filetype   = 'text'
-    vim.b[ev.buf].pdf_path    = path
-    vim.keymap.set('n', '<localleader>pi', function() pdf_image_view(path, 1) end,
-      { buffer = ev.buf, silent = true, desc = 'PDF: 이미지 모드로' })
   end,
 })
 
--- :PdfPage [번호] — 이미지 모드 (인자 없으면 1쪽부터). PDF 버퍼 안이면 그 파일로.
+-- 그림 버퍼(png/jpg/... — image.nvim이 hijack한 것) 공통 편의: q로 닫기.
+-- 그래픽 못 하는 터미널이면 빈 화면만 뜨니 왜 안 보이는지 알려준다.
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('my.imageview', {}),
+  pattern = 'image_nvim',
+  callback = function(ev)
+    vim.keymap.set('n', 'q', '<Cmd>bdelete!<CR>', { buffer = ev.buf, silent = true })
+    if not _G.TermGfxBackend() then vim.notify(gfx_warn, vim.log.levels.WARN) end
+  end,
+})
+
+-- 버퍼가 사라지면 들고 있던 이미지 핸들도 정리
+vim.api.nvim_create_autocmd('BufWipeout', {
+  group = vim.api.nvim_create_augroup('my.imagegc', {}),
+  callback = function(ev)
+    if shown[ev.buf] then pcall(function() shown[ev.buf]:clear() end) end
+    shown[ev.buf], pdf_state[ev.buf] = nil, nil
+  end,
+})
+
+-- :PdfPage [번호] — 이미지 모드로 (인자 없으면 1쪽부터)
 vim.api.nvim_create_user_command('PdfPage', function(o)
   local path = vim.b.pdf_path or vim.fn.expand('%:p')
-  if not path:match('%.pdf$') then
+  if not path:lower():match('%.pdf$') then
     vim.notify('PDF 버퍼가 아니다 — :e 파일.pdf 로 연 다음 실행할 것', vim.log.levels.WARN)
     return
   end
-  pdf_image_view(path, tonumber(o.args) or 1)
+  pdf_image_view(vim.api.nvim_get_current_buf(), path, tonumber(o.args) or 1)
 end, { nargs = '?', desc = 'PDF를 페이지 이미지로 보기' })
+
+-- :PdfText — 텍스트 모드로 (검색·복사할 때, ssh 등 그래픽 없는 환경에서)
+vim.api.nvim_create_user_command('PdfText', function()
+  local path = vim.b.pdf_path or vim.fn.expand('%:p')
+  if not path:lower():match('%.pdf$') then
+    vim.notify('PDF 버퍼가 아니다', vim.log.levels.WARN)
+    return
+  end
+  pdf_text_view(vim.api.nvim_get_current_buf(), path)
+end, { desc = 'PDF를 텍스트로 보기' })
 
 -- :PdfOpen — 시스템 기본 뷰어로 (주석/폼처럼 터미널로 안 되는 작업용)
 vim.api.nvim_create_user_command('PdfOpen', function()
@@ -1826,8 +1942,24 @@ if s:nvim_ok
 lua << EOF
 local ok, image = pcall(require, 'image')
 if ok then
-  -- magick_cli: ImageMagick CLI만 필요 (luarocks 불필요)
-  image.setup({ backend = 'kitty', processor = 'magick_cli' })
+  -- backend를 'kitty'로 박아두면 gnome-terminal에선 화면이 깨진다. 터미널을 보고
+  -- 고른다 (TermGfxBackend 정의는 위 PDF 섹션). 못 그리는 터미널이면 이름만
+  -- 넣어두는데, backend는 lazy라 실제로 그릴 때까지 아무것도 출력하지 않는다.
+  -- magick_cli: ImageMagick CLI만 필요 (luarocks 불필요, IM6 convert로도 된다)
+  image.setup({
+    backend   = _G.TermGfxBackend() or 'kitty',
+    processor = 'magick_cli',
+    -- :e foo.png 하면 바로 그림이 뜨게 한다. 기본값에 없는 확장자를 보탰다
+    -- (bmp/tiff/ico/svg 전부 ImageMagick이 읽는다). 대문자 확장자도 같이.
+    hijack_file_patterns = {
+      '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.avif',
+      '*.bmp', '*.tif', '*.tiff', '*.ico', '*.svg',
+      '*.PNG', '*.JPG', '*.JPEG',
+    },
+    -- 기본 50이면 그림 하나 열었을 때 창 절반만 쓰고 잘린 것처럼 보인다.
+    -- 마크다운 인라인 미리보기가 너무 커지면 이 값을 줄이면 된다.
+    max_height_window_percentage = 100,
+  })
 end
 EOF
 
