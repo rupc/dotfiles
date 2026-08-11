@@ -202,3 +202,25 @@ command -v zoxide >/dev/null 2>&1 && eval "$(zoxide init bash)"
 
 
 
+
+# -----------------------------------------------------------------------------
+# tty 모드 복구 — "타이핑이 안 보이는" 증상 방지 (2026-08)
+# -----------------------------------------------------------------------------
+# 증상: 글자가 화면에 안 찍히는데 엔터를 치면 명령은 실행된다. ECHO 비트가 꺼진
+# 것이다. 비밀번호를 가리려고 `stty -echo`를 한 프로그램이 Ctrl-C·크래시·ssh
+# 끊김으로 복구를 못 하고 죽으면 그대로 남는다. 수동 복구는 (안 보이는 채로)
+# `stty echo` 치고 엔터.
+#
+# zsh는 ZLE가 프롬프트로 돌아올 때 tty 모드를 스스로 되돌려서 이 증상이 거의
+# 안 생긴다(.zshrc는 ttyctl -f로 한 번 더 못박아둠). bash에는 그런 장치가 없어
+# 한번 꺼지면 계속 남는다 — pty로 재현해서 확인했다. 그래서 여기서는 프롬프트
+# 직전에 복구한다. PROMPT_COMMAND에 기존 값이 있으면 앞에 이어 붙인다.
+_dotfiles_fix_tty_echo() {
+    [ -t 0 ] && stty echo 2>/dev/null
+    return 0   # 실패해도 프롬프트가 종료코드를 물려받지 않도록
+}
+case "$PROMPT_COMMAND" in
+    *_dotfiles_fix_tty_echo*) ;;   # 중복 등록 방지 (재source 대비)
+    "") PROMPT_COMMAND="_dotfiles_fix_tty_echo" ;;
+    *)  PROMPT_COMMAND="_dotfiles_fix_tty_echo; $PROMPT_COMMAND" ;;
+esac
