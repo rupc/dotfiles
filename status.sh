@@ -291,10 +291,20 @@ else no_ "taplo" "cargo 없음"; fi
 # 두 갈래다: toggleterm은 CLI를 그냥 띄우고(<space>t*), agentic.nvim은 ACP로 붙어
 # 선택영역·파일을 컨텍스트로 넘긴다(<space>a*). ACP 쪽은 브리지 바이너리가 따로 필요.
 category "AI 에이전트" "setup-nvim.sh"
-for cli in claude codex gemini; do
+# claude만 셋업 스크립트가 설치까지 한다 (공식 네이티브 설치 — setup-claude.sh).
+have claude && yes_ "claude CLI" "$(claude --version 2>/dev/null | head -1)" \
+    || no_ "claude CLI" "./setup-claude.sh"
+for cli in codex gemini; do
     have "$cli" && yes_ "$cli CLI" "toggleterm에서 바로 실행" \
         || no_ "$cli CLI" "각자 공식 설치 경로로 설치 (셋업 스크립트 범위 밖)"
 done
+# 상태줄: 스크립트가 실행 가능하고 settings.json이 그걸 가리켜야 둘 다 성립
+if [ -x "$HOME/.claude/statusline.sh" ] \
+   && grep -q '"statusLine"' "$HOME/.claude/settings.json" 2>/dev/null; then
+    yes_ "claude 상태줄" "경로·계정·모델·effort·ctx·플랜 사용량"
+else
+    no_ "claude 상태줄" "./setup-claude.sh"
+fi
 for entry in "claude-agent-acp:claude" "gemini:gemini" "codex-acp:codex"; do
     b=${entry%%:*}; who=${entry##*:}
     if have "$b"; then yes_ "$b" "$who ACP 브리지"

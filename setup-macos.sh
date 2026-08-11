@@ -24,9 +24,11 @@ fi
 #    공용 스크립트(setup-shell.sh/setup-nvim.sh)에는 mac/linux 양쪽 툴만 둘 것.
 brew bundle --file="$DOTFILES_DIR/Brewfile"
 
-# 3. 셸 환경 + neovim 환경 (컴포넌트 스크립트 재사용)
+# 3. 셸 환경 + neovim 환경 + Claude Code (컴포넌트 스크립트 재사용)
 SKIP_PACKAGES=1 "$DOTFILES_DIR/setup-shell.sh"
 SKIP_PACKAGES=1 "$DOTFILES_DIR/setup-nvim.sh"
+# claude CLI는 brew가 아니라 공식 네이티브 설치라 SKIP_PACKAGES를 안 넘긴다
+"$DOTFILES_DIR/setup-claude.sh"
 
 # 4. mac 전용 마무리
 BREW_BIN="$(brew --prefix)/bin"

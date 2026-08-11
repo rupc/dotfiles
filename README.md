@@ -13,6 +13,7 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
 | 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` · linux: `./setup-linux.sh` |
 | 셸 환경만 (zsh/oh-my-zsh/CLI 툴) | `./setup-shell.sh` |
 | neovim 환경만 (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
+| Claude Code만 (CLI + `~/.claude` 설정/상태줄) | `./setup-claude.sh` |
 | 공용 머신, sudo 없음 | `SKIP_PACKAGES=1 ./setup-shell.sh` (또는 `setup-nvim.sh`) |
 | 컨테이너 | `containers/build.sh` → `containers/run.sh` ([상세](containers/README.md)) |
 | **지금 상태 확인** (아무것도 설치 안 함) | `./status.sh` (빠진 것만: `./status.sh --missing`) |
@@ -27,6 +28,15 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
   생략(사유) / 실패(사유). 패키지 매니저 원본 출력은 `/tmp/setup-*.log`로 빠지고,
   생략·실패한 항목만 사유를 보고 조치한 뒤 재실행하면 그것만 마저 설치된다.
   (공용 로깅 헬퍼: `lib-report.sh`)
+- `setup-claude.sh`는 claude CLI(공식 네이티브 설치, sudo 불필요)와 `~/.claude` 설정을
+  배포한다. 핵심은 **상태줄** — 지금 어느 머신의 어느 경로에서, 어떤 계정·모델·effort로
+  돌고 있고, 이 대화창(`ctx`)과 결제 플랜(`5h`/`7d`)이 얼마나 남았는지가 한 줄로 뜬다.
+  머신을 옮겨다니며 세션을 여러 개 띄우면 이게 없을 때 어느 창이 어디에 붙어 있는지
+  헷갈린다. `~/.claude` 자체는 `0700`으로 잠근다(세션 기록이 들어있다).
+  세션 기록(`projects/`, `history.jsonl`)은 chezmoi 관리 대상이 아니라 그대로 남는다.
+  단, `settings.json`은 Claude Code가 스스로도 쓴다(`/config`, 모델 변경 등) — 셋업을
+  다시 돌리면 repo 내용으로 덮이므로, TUI에서 바꾼 걸 살리려면 먼저 되담을 것:
+  `chezmoi re-add ~/.claude/settings.json`
 - `status.sh`는 읽기 전용 점검이다 — 카테고리(사전 요구사항/CLI 툴/셸/neovim/LSP/
   AI 에이전트/런타임)별로 무엇이 있고 없는지, **없다면 왜 없는지**를 찍고 마지막에
   통계와 "사유별 묶음"을 보여준다. 사유 하나를 해결하면 몇 개가 같이 풀리는지가 보인다.
