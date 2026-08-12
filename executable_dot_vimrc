@@ -272,8 +272,26 @@ nnoremap <leader>gs :Gstatus<cr>
 nnoremap <leader>lv :source $MYVIMRC<cr>
 " Edit Vimrc without losing concentration 
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
-" want F9 key to be toggling .vimrc window not adding it
-nnoremap <F9> :vs ~/.vimrc<cr>
+" F9 = vimrc 창 토글. 예전엔 :vs ~/.vimrc 라서 누를 때마다 창이 하나씩 더 쌓였다.
+" 이미 이 탭에 떠 있으면 그 창을 닫고, 없으면 오른쪽에 새로 띄운다.
+" 경로 비교는 resolve()로 — 심링크로 열렸든 절대경로로 열렸든 같은 파일로 본다.
+function! ToggleVimrc() abort
+    let l:target = resolve(expand('~/.vimrc'))
+    for l:win in range(1, winnr('$'))
+        let l:name = bufname(winbufnr(l:win))
+        if !empty(l:name) && resolve(fnamemodify(l:name, ':p')) ==# l:target
+            " 유일한 창이면 닫으면 nvim이 종료된다 — 그냥 둔다
+            if winnr('$') == 1
+                echo 'vimrc 창만 남아 있어 닫지 않음'
+                return
+            endif
+            execute l:win . 'wincmd c'
+            return
+        endif
+    endfor
+    execute 'vsplit' fnameescape(l:target)
+endfunction
+nnoremap <silent> <F9> :call ToggleVimrc()<CR>
 " edit snippets
 
 function! EditSnippets(name)
