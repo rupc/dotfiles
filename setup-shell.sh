@@ -250,15 +250,17 @@ else
 fi
 
 # --- 5. 셸 dotfiles 배포 ----------------------------------------------------
-step "셸 dotfiles 배포 (.zshrc / .bashrc / .bash_profile / .oh-my-zsh)"
+step "셸 dotfiles 배포 (.zshrc / .bashrc / .bash_profile / .oh-my-zsh / fastfetch)"
 if have chezmoi; then
     # sourceDir은 항상 이 repo로 강제 — 예전 셋업이 남긴 toml이 옛 clone을 가리키는 사고 방지
     mkdir -p "$HOME/.config/chezmoi"
     printf 'sourceDir = "%s"\n' "$DOTFILES_DIR" > "$HOME/.config/chezmoi/chezmoi.toml"
     # --force: 타깃이 밖에서 수정됐을 때 뜨는 overwrite 프롬프트(/dev/tty)가
     # 로그 리다이렉트에 가려져 무한 대기하는 것을 방지 — repo가 항상 source of truth
+    # fastfetch 설정도 셸 스플래시의 일부라 여기서 배포한다 (zshrc가 fastfetch를 부른다)
     if chezmoi apply --force --source "$DOTFILES_DIR" \
-        "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.oh-my-zsh" >>"$LOG" 2>&1
+        "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.oh-my-zsh" \
+        "$HOME/.config/fastfetch" >>"$LOG" 2>&1
     then newly "셸 dotfiles (source: $DOTFILES_DIR)"; else failed "셸 dotfiles" "chezmoi apply 실패 (로그: $LOG)"; fi
 else
     failed "셸 dotfiles" "chezmoi 없음 — 배포 불가"

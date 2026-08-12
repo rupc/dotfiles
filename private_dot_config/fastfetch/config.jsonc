@@ -1,0 +1,61 @@
+// fastfetch 설정 — 새 터미널을 열 때 뜨는 시스템 스플래시 (zshrc가 실행)
+//
+// 기본 설정에는 저장장치가 "Disk (/): 287G / 926G" 하나뿐이어서, 어떤 SSD를
+// 쓰는지 알 수 없었다. 아래 두 줄을 추가해 제품명·용량·인터페이스까지 보여준다:
+//   PhysicalDisk : 장치 단위 정보 (제품명, 용량, SSD/HDD) — fastfetch 내장
+//   command      : 인터페이스와 PCIe 링크 대역폭 — fastfetch가 안 주므로 직접
+//
+// 모듈 목록은 fastfetch 기본값을 그대로 옮긴 것이다(fastfetch --gen-config-full
+// 로 확인). "modules"를 지정하면 기본값이 대체되므로, 여기 없는 모듈은 안 나온다.
+//
+// 배포: chezmoi (private_dot_config/fastfetch/ -> ~/.config/fastfetch/)
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "modules": [
+    "title",
+    "separator",
+    "os",
+    "host",
+    "kernel",
+    "uptime",
+    "packages",
+    "shell",
+    "display",
+    "de",
+    "wm",
+    "wmtheme",
+    "theme",
+    "icons",
+    "font",
+    "cursor",
+    "terminal",
+    "terminalfont",
+    "cpu",
+    "gpu",
+    "memory",
+    "swap",
+    "disk",
+    {
+      // 물리 장치 단위 — 가상 디스크(마운트된 dmg/iso)는 빼고 실제 장치만.
+      // mac에서 앱 설치 이미지를 열어두면 "Apple Disk Image Media"가 줄줄이 뜬다.
+      // key를 덮어쓰면 안 된다 — 제품명이 key에 들어가는 구조라 통째로 사라진다
+      // ({1}은 장치 이름이 아니라 인덱스다).
+      "type": "physicaldisk",
+      "hideVirtual": true
+    },
+    {
+      // 인터페이스 + PCIe 링크 대역폭. 하드웨어 정보는 캐시되므로 셸 시작이
+      // 느려지지 않는다 (캐시 적중 시 ~10ms).
+      // command 모듈은 출력의 첫 줄만 쓰므로, 디스크가 여러 개면 paste로 한 줄로 합친다.
+      "type": "command",
+      "key": "Storage Link",
+      "text": "~/.config/fastfetch/ssd-info.sh 2>/dev/null | paste -sd ' | ' -"
+    },
+    "localip",
+    "battery",
+    "poweradapter",
+    "locale",
+    "break",
+    "colors"
+  ]
+}
