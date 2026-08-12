@@ -94,7 +94,8 @@ else
         local c; c=$(apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/{print $2}')
         [ -n "$c" ] && [ "$c" != "(none)" ]
     }
-    for pkg in zsh git curl fd-find ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}"; do
+    # SHELL_TOOLS_LINUX: mac에는 의미 없어서 공용 목록에서 분리해둔 것들 (nvme-cli 등)
+    for pkg in zsh git curl fd-find ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}" "${SHELL_TOOLS_LINUX[@]}"; do
         if apt_installed "$pkg"; then
             already "$pkg"
         elif ! apt_candidate "$pkg"; then

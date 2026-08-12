@@ -125,6 +125,10 @@ why_cli() {  # $1=툴 이름
 # 나눠 찍고, 묶음마다 몇 개가 채워졌는지(3/5)를 헤더에 붙인다.
 category "CLI 툴" "setup-shell.sh"
 report_tool() {  # $1=패키지명
+    # linux 전용 툴을 mac에서 '누락'으로 세면 통계가 거짓말을 한다
+    if [ "$OS" = "mac" ]; then
+        case " $TOOLS_LINUX_ONLY " in *" $1 "*) na_ "$1" "linux 전용"; return 0 ;; esac
+    fi
     if have_any "$(tool_cmd "$1")"; then yes_ "$1"; else no_ "$1" "$(why_cli "$1")"; fi
 }
 GROUPED=""   # 어느 그룹에도 안 들어간 툴을 찾기 위한 기록
@@ -132,6 +136,9 @@ for grp in "${TOOL_GROUPS[@]}"; do
     gname=${grp%%|*}; gtools=${grp#*|}
     gok=0; gtot=0
     for pkg in $gtools; do
+        if [ "$OS" = "mac" ]; then
+            case " $TOOLS_LINUX_ONLY " in *" $pkg "*) continue ;; esac
+        fi
         gtot=$((gtot + 1))
         have_any "$(tool_cmd "$pkg")" && gok=$((gok + 1))
     done
@@ -146,7 +153,7 @@ for grp in "${TOOL_GROUPS[@]}"; do
 done
 # 그룹에 넣는 걸 잊은 툴 — 조용히 사라지면 안 되니 여기로 모은다
 UNGROUPED=""
-for pkg in chezmoi fd ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}"; do
+for pkg in chezmoi fd ripgrep git-delta "${SHELL_TOOLS_COMMON[@]}" "${SHELL_TOOLS_LINUX[@]}"; do
     case " $GROUPED " in *" $pkg "*) ;; *) UNGROUPED="$UNGROUPED $pkg" ;; esac
 done
 if [ -n "${UNGROUPED// /}" ]; then

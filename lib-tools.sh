@@ -20,7 +20,15 @@ SHELL_TOOLS_COMMON=(
     lazydocker dive k9s
     fastfetch onefetch vivid procs dust sd gping doggo glow
     bandwhich cmatrix genact
+    fio smartmontools
 )
+
+# linux에서만 의미가 있는 것 — mac에 깔아도 못 쓴다(nvme-cli는 리눅스 커널 인터페이스를
+# 직접 두드린다). status.sh는 mac에서 이것들을 '해당 없음'으로 처리한다.
+SHELL_TOOLS_LINUX=(
+    nvme-cli
+)
+TOOLS_LINUX_ONLY="nvme-cli"
 
 # apt에 없는 툴 — GitHub 릴리스에서 ~/.local/bin으로 (sudo 불필요).
 # 전부 Go/Rust 단일 바이너리 프로젝트라 배포 방식이 GitHub 릴리스뿐이다.
@@ -55,6 +63,7 @@ TOOL_GROUPS=(
     "파일 보기|eza bat hexyl glow"
     "시스템 모니터링|htop btop glances procs fastfetch"
     "디스크·용량|ncdu duf dust"
+    "저장장치 진단·벤치|smartmontools nvme-cli fio"
     "네트워크|httpie mtr gping doggo bandwhich rsync"
     "개발 워크플로우|tmux lazygit gh git-delta direnv entr hyperfine shellcheck onefetch"
     "텍스트·데이터|jq yq sd tldr navi"
@@ -70,6 +79,8 @@ tool_cmd() {
         ripgrep)   echo "rg" ;;
         git-delta) echo "delta" ;;
         httpie)    echo "http" ;;
+        smartmontools) echo "smartctl" ;;
+        nvme-cli)  echo "nvme" ;;
         fd|fd-find) echo "fd,fdfind" ;;
         bat)       echo "bat,batcat" ;;
         *)         echo "$1" ;;
@@ -131,5 +142,8 @@ describe() {
     bandwhich)  echo "프로세스별 실시간 대역폭 사용량" ;;
     cmatrix)    echo "매트릭스 화면보호기" ;;
     genact)     echo "가짜 작업 로그 생성기 — 바빠 보이기용" ;;
+    fio)        echo "디스크 실측 벤치마크 — --direct=1로 캐시 우회" ;;
+    smartmontools) echo "디스크 제품명·수명·온도 조회 (smartctl)" ;;
+    nvme-cli)   echo "NVMe 상세·PCIe 링크·SMART 로그 (nvme)" ;;
     esac
 }

@@ -82,6 +82,11 @@ brew "httpie"
 brew "mtr"
 brew "rsync"     # mac 기본은 Apple 번들 구버전 openrsync — 이어받기 되는 최신판으로
 
+# 저장장치 진단/벤치 (fastfetch 스플래시의 SSD 정보와 같은 계열)
+# nvme-cli는 리눅스 전용이라 여기 없다 — setup-shell.sh의 SHELL_TOOLS_LINUX에 있다
+brew "smartmontools"  # smartctl — 제품명·수명·온도
+brew "fio"            # 실측 벤치 (--direct=1로 페이지 캐시 우회)
+
 brew "lazydocker"
 brew "dive"
 brew "k9s"
