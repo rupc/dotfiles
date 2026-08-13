@@ -1499,15 +1499,31 @@ if neotree_ok then
       use_libuv_file_watcher = true,             -- 파일 생성/삭제 실시간 반영
       window = {
         mappings = {
-          -- 기본 <cr>는 "마지막에 쓰던 창"에 열어서, 창이 여럿이면 엉뚱한 데 뜬다.
-          -- w = 어느 창에 열지 직접 고르기 (window-picker 없으면 이 매핑만 무동작)
-          ['w'] = 'open_with_window_picker',
-          ['W'] = 'split_with_window_picker',
-          ['<C-v>'] = 'vsplit_with_window_picker',
+          -- b는 filesystem 소스에서 rename_basename으로 잡혀 있다. 단어 이동으로 되돌리고
+          -- 원래 기능은 gb로 옮긴다 (아래 w/e와 같은 이유 — 전역 매핑 주석 참고).
+          ['b']  = 'none',
+          ['gb'] = 'rename_basename',
         },
       },
     },
-    window = { width = 34 },
+    window = {
+      width = 34,
+      mappings = {
+        -- neo-tree 기본값이 w/b/e를 가져가서(w=창 선택, b=이름만 변경, e=너비 토글)
+        -- 트리 안에서 vim의 단어 이동이 안 됐다. 긴 경로명 위를 오갈 수가 없다.
+        -- NERDTree는 이 키들을 안 건드렸으므로, 그 습관대로 되돌린다.
+        -- ('none'은 neo-tree가 매핑을 건너뛰게 하는 값 — nop/noop도 같다)
+        ['w'] = 'none',
+        ['e'] = 'none',
+        -- 밀려난 명령은 g 접두사로. gg/G 같은 이동키와 겹치지 않는다.
+        -- 기본 <cr>는 "마지막에 쓰던 창"에 열어서 창이 여럿이면 엉뚱한 데 뜬다 —
+        -- gw = 어느 창에 열지 직접 고르기 (window-picker 없으면 이 매핑만 무동작)
+        ['gw'] = 'open_with_window_picker',
+        ['gW'] = 'split_with_window_picker',
+        ['<C-v>'] = 'vsplit_with_window_picker',
+        ['ge'] = 'toggle_auto_expand_width',
+      },
+    },
   })
 end
 
