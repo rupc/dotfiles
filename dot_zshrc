@@ -307,7 +307,44 @@ if [[ -o interactive ]] && [[ -t 0 ]]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 8. 프롬프트 관련 주의사항
+# 8. 키보드 리포팅 프로토콜 초기화 — 화면에 ;5:3u 가 튀어나오는 증상 (2026-08)
+# -----------------------------------------------------------------------------
+# 증상: 잘 쓰던 탭에서 갑자기 입력이 이상해지고 화면에 `;5:3u` 같은 조각이 찍힌다.
+# 새 탭을 열면 멀쩡하다.
+#
+# 7번(tty ECHO)과는 다른 문제다. 그건 커널 tty 설정이고, 이건 터미널 에뮬레이터
+# 쪽에 남는 상태다. nvim이나 TUI 에이전트는 시작할 때 Kitty keyboard protocol
+# (CSI u)을 켜서 "Ctrl+Shift+문자나 키를 뗀 것까지 구분해서 보내달라"고 요청하는데,
+# 끝날 때 되돌리는 코드를 못 돌리고 죽으면(절전, 크래시, ssh 끊김) 그 요청이 탭에
+# 그대로 남는다. 그래서 평범한 타이핑까지 CSI-u 패킷으로 전송된다.
+# (`;5:3u` 에서 5=Ctrl, :3=키 뗌 이벤트 — 그래서 Ctrl이 눌린 것처럼 동작한다)
+#
+# 프롬프트가 다시 뜰 때마다 원복한다. printf는 zsh 내장이라 포크가 없다.
+#   CSI < 999 u : Kitty 키보드 모드 스택 비우기 (999개까지 pop -> 기본값 복귀)
+#   CSI = 0;1 u : 남아 있는 enhancement flag를 전부 0으로
+#   CSI > 4 m   : xterm modifyOtherKeys를 초기값으로
+#
+# 근본 해결은 터미널 설정이다 (iTerm2: Settings > Profiles > Keys > General).
+#   Report modifiers using CSI u          OFF
+#   Apps can change how keys are reported OFF
+# 다만 두 번째를 끄면 Shift+Enter 같은 확장 조합을 쓰는 TUI가 제약을 받는다.
+# 이 훅은 "확장 조합은 그대로 쓰되, 깨지면 자동 복구"를 택한 절충안이다.
+# (프로파일별 설정이라 Default/Hotkey/Dynamic 프로파일을 각각 봐야 한다)
+#
+# ssh 원격에서 깨졌다면 로컬 프롬프트로 돌아와야 이 훅이 돈다. 원격에도 이 저장소를
+# 배포해두면 그쪽 프롬프트에서 바로 복구된다.
+#
+# TERM=dumb 제외: CSI를 해석 못 하는 터미널에 보내면 화면에 그대로 찍힌다.
+if [[ -o interactive ]] && [[ -t 1 ]] && [[ "$TERM" != dumb ]]; then
+  _dotfiles_reset_key_reporting() {
+    printf '\e[<999u\e[=0;1u\e[>4m'
+  }
+  autoload -U add-zsh-hook
+  add-zsh-hook precmd _dotfiles_reset_key_reporting
+fi
+
+# -----------------------------------------------------------------------------
+# 9. 프롬프트 관련 주의사항
 # -----------------------------------------------------------------------------
 # 예전에 여기 `precmd() { prompt pure }` 안전장치가 있었는데 제거했다(2026-08).
 # pure는 precmd 훅에서 prompt_pure_set_colors로 zstyle 색을 반영하는데, 그 직후
