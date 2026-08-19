@@ -1497,6 +1497,19 @@ if neotree_ok then
     filesystem = {
       follow_current_file = { enabled = true },  -- 편집 중인 파일을 트리에서 자동 추적
       use_libuv_file_watcher = true,             -- 파일 생성/삭제 실시간 반영
+      -- 숨김 파일을 기본으로 보여준다. neo-tree 기본값은 dotfile을 감추는데,
+      -- 이 저장소처럼 dot_zshrc / private_dot_config / .claude 가 본론인 곳에서는
+      -- 트리가 거의 텅 비어 보인다. oil(show_hidden)과 fzf(--hidden)도 이미 보여주는
+      -- 쪽이라 셋을 같은 규칙으로 맞춘 것이다.
+      filtered_items = {
+        hide_dotfiles = false,
+        -- gitignore 대상은 계속 감춘다 — node_modules/.venv/빌드 산출물이 트리를
+        -- 덮어버린다. 필요할 때 H로 잠깐 켜서 보면 된다.
+        hide_gitignored = true,
+        -- .git 내부는 볼 일이 없다 (fzf도 --exclude .git 로 빼고 있다).
+        -- never_show라 H로 켜도 안 나온다.
+        never_show = { '.git' },
+      },
       window = {
         mappings = {
           -- b는 filesystem 소스에서 rename_basename으로 잡혀 있다. 단어 이동으로 되돌리고
