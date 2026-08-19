@@ -1532,6 +1532,13 @@ local oil_ok, oil = pcall(require, 'oil')
 if oil_ok then
   oil.setup({
     view_options = { show_hidden = true },
+    -- oil이 디렉토리 버퍼를 가로채지 않게 한다 (기본값 true).
+    -- 켜두면 `nvim .`에서 neo-tree와 충돌한다: neo-tree가 사이드바 버퍼를
+    -- "neo-tree filesystem [1]"이라는 이름으로 만드는데, oil이 그 이름을 디렉토리
+    -- 경로로 착각해 그 버퍼를 자기 것으로 바꿔버린다. 그러면 왼쪽 34칸 패널이
+    -- 트리가 아니라 oil 버퍼가 되고, oil은 <cr>을 '현재 창에서 열기'로 처리하므로
+    -- 파일이 그 좁은 패널에 열린다. 껴도 잃는 건 없다 — oil은 -(:Oil)로 직접 연다.
+    default_file_explorer = false,
   })
 end
 
