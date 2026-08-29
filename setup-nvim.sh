@@ -282,6 +282,24 @@ else
     skipped "taplo(toml LSP)" "cargo 없음"
 fi
 
+# latex=texlab — .tex 파일을 열 때만 의미가 있다. TeX 배포판(texlive)이 없는
+# 머신에는 굳이 깔지 않는다 — 컴파일이 안 되는 곳에서 LSP만 있어봐야 쓸모가 없다.
+if have texlab; then
+    already "texlab"
+elif ! have latexmk && ! have pdflatex; then
+    skipped "texlab(latex LSP)" "TeX 배포판 없음 (mac: brew install texlive)"
+elif [ -n "${SKIP_PACKAGES:-}" ]; then
+    skipped "texlab(latex LSP)" "SKIP_PACKAGES=1"
+elif [ "$OS" = "mac" ] && have brew; then
+    echo "  … texlab 설치 중 (brew)"
+    brew install texlab && newly "texlab" || failed "texlab" "brew 설치 실패"
+elif have cargo; then
+    echo "  … texlab 설치 중 (cargo — 소스 빌드라 몇 분 걸릴 수 있음)"
+    cargo install --locked texlab && newly "texlab" || failed "texlab" "cargo 빌드 실패"
+else
+    skipped "texlab(latex LSP)" "brew/cargo 없음"
+fi
+
 # rust=rust-analyzer — rustup이 있는 머신에서만 (rust 툴체인 없이는 어차피 무용)
 if have rust-analyzer; then
     already "rust-analyzer"

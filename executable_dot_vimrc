@@ -83,41 +83,34 @@ nnoremap <a-]> :cnext<cr>
 
 
 " -----------------------------------------------------------------------------
-" Latex configurations
-function! LaTexConfigure()
-    " Compile and View Latex documents
-    nnoremap <leader>rr :call LaTeXRun(fullname)<cr>
-    " View Latex documents with evince
-    nnoremap <leader>rv :call LaTeXViewDocument(fullname)<cr>
-    " Compile latex documents
-    nnoremap <leader>rc :call LaTeXCompile(fullname)<cr>
-    nnoremap <leader><leader> :call LaTeXCompile(fullname)<cr>
-    autocmd BufEnter *.tex call SetCurrentWorkingFiles()|set syntax=tex
-endfunction
-autocmd Filetype tex call LaTexConfigure()
-" LaTeX Settings
-" global variable prefixed by g:
-function! LaTeXRun(file)
-    let dvifile=g:filename.".dvi"
-    " let cmd = "!latex ".a:file." && "."xdvi ".dvifile. " -s 3"
-    let pdffile=g:filename.".pdf"
-    let cmd = "!pdflatex ".a:file." && "."evince ".pdffile
-    execute cmd
-endfunction
-
-function! LaTeXCompile(file)
-    let dvifile=g:filename.".dvi"
-    let cmd = "!pdflatex ".a:file
-    execute cmd
-endfunction
-
-function! LaTeXViewDocument(file)
-    let pdffile=g:filename.".pdf"
-    let cmd = "!evince ".pdffile." &"
-    execute cmd
-endfunction
+" LaTeX (2026-08) — vimtex 기반
+"
+" 예전엔 여기서 pdflatex를 직접 부르고 evince로 열었다. 리눅스 시절 설정이라
+" mac에서는 뷰어부터 없고, 참고문헌(bibtex/biber)이나 상호참조 때문에 여러 번
+" 돌려야 하는 것도 처리하지 못했다. latexmk가 그 판단을 대신 해주므로 vimtex에
+" 맡긴다. 터미널에서 직접 쓸 때도 latexmk 한 줄이면 된다:
+"   latexmk -pdf paper.tex      (필요한 만큼 알아서 반복 컴파일)
+"   latexmk -c                  (중간 산출물 정리)
+"
+" 뷰어: mac 기본 미리보기는 SyncTeX 역방향 검색(PDF에서 소스로 점프)을 못 한다.
+" Skim이 있으면 그걸 쓰고, 없으면 그냥 시스템 기본 앱으로 연다.
+" s:nvim_ok은 아래(플러그인 선언부)에서야 정의된다 — 여기서 쓰면 E121이라 직접 검사한다
+if has('nvim-0.11')
+  let g:vimtex_compiler_method = 'latexmk'
+  if has('mac')
+    let g:vimtex_view_method = isdirectory('/Applications/Skim.app') ? 'skim' : 'general'
+  else
+    let g:vimtex_view_method = 'zathura'
+  endif
+  " quickfix가 경고까지 다 물고 올라오면 진짜 에러가 묻힌다 — 에러만 띄운다
+  let g:vimtex_quickfix_open_on_warning = 0
+  " <leader><leader> 로 컴파일하던 습관 유지 (예전 매핑과 같은 자리)
+  autocmd Filetype tex nnoremap <buffer> <leader><leader> <cmd>VimtexCompile<cr>
+  autocmd Filetype tex nnoremap <buffer> <leader>rv <cmd>VimtexView<cr>
+  autocmd Filetype tex nnoremap <buffer> <leader>rc <cmd>VimtexCompileSS<cr>
+  autocmd Filetype tex nnoremap <buffer> <leader>re <cmd>VimtexErrors<cr>
+endif
 " -----------------------------------------------------------------------------
-
 
 " -----------------------------------------------------------------------------
 
@@ -730,6 +723,8 @@ if s:nvim_ok
   " 같은 채팅 UI에서. toggleterm의 raw TUI와 달리 선택영역·파일·진단을
   " 컨텍스트로 넘길 수 있다. 에이전트 브리지는 setup-nvim.sh가 npm으로 설치.
   Plug 'carlos-algms/agentic.nvim'     " nvim 0.11+ 필요
+  " LaTeX: 컴파일(latexmk 위임)·목차·SyncTeX·환경 조작. 논문 작업의 중심
+  Plug 'lervag/vimtex'
 endif
 
 
@@ -1378,6 +1373,14 @@ local servers = {
     filetypes = { 'toml' },
     root_markers = { '.git' },
   },
+  -- latex: 인용키/라벨 자동완성, \ref·\cite 정의로 점프, 진단.
+  -- 컴파일은 vimtex(latexmk)가 하므로 texlab의 빌드 기능은 켜지 않는다 — 둘 다
+  -- 돌리면 같은 파일을 동시에 컴파일해서 aux 파일이 깨진다.
+  texlab = {
+    bin = 'texlab',
+    filetypes = { 'tex', 'plaintex', 'bib' },
+    root_markers = { '.latexmkrc', 'latexmkrc', 'main.tex', '.git' },
+  },
 }
 
 -- nvim-cmp가 있으면 서버에 확장 completion capability 광고 (스니펫 등)
@@ -1446,6 +1449,7 @@ if ts_ok and ts.install then
     'c', 'cpp', 'cuda', 'yaml', 'json', 'toml', 'proto',
     'javascript', 'typescript', 'tsx',
     'markdown', 'markdown_inline', 'make', 'dockerfile', 'diff',
+    'latex', 'bibtex',
   }
   if vim.fn.executable('tree-sitter') == 1 then
     pcall(ts.install, vim.g.my_ts_langs)  -- async, 이미 설치된 파서는 no-op

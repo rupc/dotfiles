@@ -82,6 +82,16 @@ brew "httpie"
 brew "mtr"
 brew "rsync"     # mac 기본은 Apple 번들 구버전 openrsync — 이어받기 되는 최신판으로
 
+# LaTeX — 논문 작업 (2026-08)
+# texlive는 우분투의 texlive-full / 윈도우 TeX Live 설치본과 같은 배포판이다.
+# MacTeX(.pkg) 대신 formula를 쓰는 이유: pkg는 /Library/TeX/texbin에 깔려 PATH를
+# 따로 잡아줘야 하고 설치에 sudo가 필요하다. formula는 brew의 bin에 링크되므로
+# 터미널에서 바로 잡히고(코딩 에이전트도 그대로 쓸 수 있다) sudo도 필요 없다.
+brew "texlive"        # pdflatex/xelatex/lualatex/latexmk/bibtex/tlmgr (~5GB)
+brew "biber"          # biblatex용 참고문헌 처리 — texlive 본체엔 실행파일이 없다
+brew "latexindent"    # .tex 포매터 (VS Code LaTeX Workshop의 기본 포매터)
+brew "texlab"         # LaTeX LSP — 인용키 자동완성, \ref/\cite 점프
+
 # 저장장치 진단/벤치 (fastfetch 스플래시의 SSD 정보와 같은 계열)
 # nvme-cli는 리눅스 전용이라 여기 없다 — setup-shell.sh의 SHELL_TOOLS_LINUX에 있다
 brew "smartmontools"  # smartctl — 제품명·수명·온도
