@@ -91,6 +91,9 @@ brew "texlive"        # pdflatex/xelatex/lualatex/latexmk/bibtex/tlmgr (~5GB)
 brew "biber"          # biblatex용 참고문헌 처리 — texlive 본체엔 실행파일이 없다
 brew "latexindent"    # .tex 포매터 (VS Code LaTeX Workshop의 기본 포매터)
 brew "texlab"         # LaTeX LSP — 인용키 자동완성, \ref/\cite 점프
+# mac 기본 미리보기는 SyncTeX 역방향 검색(PDF에서 소스 위치로 점프)을 못 한다.
+# vimtex가 Skim이 있으면 자동으로 골라 쓴다 (vimrc의 isdirectory 검사).
+cask "skim"           # SyncTeX 지원 PDF 뷰어
 
 # 저장장치 진단/벤치 (fastfetch 스플래시의 SSD 정보와 같은 계열)
 # nvme-cli는 리눅스 전용이라 여기 없다 — setup-shell.sh의 SHELL_TOOLS_LINUX에 있다
