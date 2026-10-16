@@ -26,6 +26,7 @@
 # 연결: ~/.claude/settings.json 의 statusLine.command 가 이 파일을 가리킨다.
 # 출력은 한 줄. 이 스크립트가 실패해도 상태줄만 비고 세션은 멀쩡하다.
 # mac 기본 bash 3.2에서도 도는 문법만 쓴다 (연관배열·${var^^} 같은 건 금지).
+# 경로가 길면 뒤쪽만 남겨 줄인다 (아래 "경로가 길면" 절 — 다른 칸이 밀려나지 않게).
 
 input=$(cat)
 
@@ -66,6 +67,96 @@ case "$cwd" in
   "$HOME"/*) path="~${cwd#"$HOME"}" ;;
   *)         path="$cwd" ;;
 esac
+
+# ── 경로가 길면 뒤쪽만 남긴다 ─────────────────────────────────────────────
+# 상태줄은 터미널 폭을 넘으면 뒤가 잘린다. 경로가 앞쪽에 있어서 경로가 길면
+# 브랜치·계정·모델·ctx·사용량이 통째로 밀려나 안 보인다. 그래서 경로에 폭 예산을
+# 두고, 넘으면 아래 순서로 줄여서 예산 안에 드는 첫 모양을 쓴다:
+#   1) 그대로                    ~/work/dotfiles
+#   2) 앞 생략 + 뒤 두 단계      ~/…/제안서및평가/1차년도_연장공고제안서
+#   3) 앞 생략 + 마지막 단계     ~/…/1차년도_연장공고제안서
+#   4) 마지막 단계 가운데 생략   ~/…/1차년도_연…고제안서
+# 예산은 화면 칸 수 기준(한글·한자 1자 = 2칸). 기본 40, CLAUDE_STATUSLINE_PATH_MAX로 조정.
+#
+# 바이트 단위로 문자를 가른다(LC_ALL=C). 상태줄이 어떤 로케일로 실행될지 모르고,
+# 로케일에 따라 ${#s}가 바이트를 세기도 문자를 세기도 해서 믿을 수 없다.
+# 3바이트 이상 UTF-8 문자는 2칸으로 센다 — 한글·한자는 정확하고, 그 밖의 기호는
+# 실제보다 넓게 잡혀 조금 더 줄어들 뿐이다(넘치는 쪽으로 틀리지 않는다).
+PATH_MAX_W="${CLAUDE_STATUSLINE_PATH_MAX:-40}"
+case "$PATH_MAX_W" in ''|*[!0-9]*) PATH_MAX_W=40 ;; esac
+
+# $1을 문자 단위로 쪼개 전역 배열 _ch(문자) / _cw(칸 수)에 담고, 합계를 _W에 둔다.
+# 결과를 echo 대신 전역에 두는 이유: $(...)는 매번 fork라 상태줄 갱신마다 쌓인다.
+_split_chars() {
+  local LC_ALL=C s=$1 n w i=0
+  _ch=(); _cw=(); _W=0
+  while [ -n "$s" ]; do
+    case "${s:0:1}" in
+      [$'\xf0'-$'\xff']) n=4; w=2 ;;
+      [$'\xe0'-$'\xef']) n=3; w=2 ;;
+      [$'\xc0'-$'\xdf']) n=2; w=1 ;;
+      *)                 n=1; w=1 ;;
+    esac
+    _ch[i]=${s:0:n}; _cw[i]=$w; _W=$((_W + w)); s=${s:n}; i=$((i + 1))
+  done
+}
+
+# $1을 $2칸 이내로 가운데를 …로 줄여 _OUT에 둔다 (앞쪽은 날짜·번호, 뒤쪽은 구분되는
+# 이름인 경우가 많아서 양끝을 살린다). 문자 경계에서만 자르므로 글자가 깨지지 않는다.
+_mid_trunc() {
+  local max=$2 hw tw w i j n head="" tail=""
+  _split_chars "$1"
+  if [ "$_W" -le "$max" ]; then _OUT=$1; return; fi
+  n=${#_ch[@]}
+  hw=$(( (max - 1) / 2 )); tw=$(( max - 1 - hw ))      # … 이 1칸
+  i=0; w=0
+  while [ "$i" -lt "$n" ] && [ $((w + _cw[i])) -le "$hw" ]; do
+    head="$head${_ch[i]}"; w=$((w + _cw[i])); i=$((i + 1))
+  done
+  j=$((n - 1)); w=0
+  while [ "$j" -ge "$i" ] && [ $((w + _cw[j])) -le "$tw" ]; do
+    tail="${_ch[j]}$tail"; w=$((w + _cw[j])); j=$((j - 1))
+  done
+  # 중괄호 필수: bash 5는 "$head…"에서 …의 첫 바이트를 변수 이름으로 읽어 깨뜨린다
+  _OUT="${head}…${tail}"
+}
+
+_shorten_path() {   # $1=경로(~ 치환 후)  $2=최대 칸 → _OUT
+  local p=$1 max=$2 anchor rest last1 head last2 more cand pre
+  _split_chars "$p"
+  if [ "$_W" -le "$max" ]; then _OUT=$p; return; fi
+  case "$p" in "~"*) anchor="~" ;; *) anchor="" ;; esac
+  rest=${p#"$anchor"}; rest=${rest#/}                     # a/b/c/d
+  last1=${rest##*/}
+  head=${rest%/*};  [ "$head" = "$rest" ] && head=""      # a/b/c (마지막 제외)
+  last2=${head##*/}
+  more=${head%/*};  [ "$more" = "$head" ] && more=""      # 뒤 두 단계 앞에 더 있나
+  if [ -n "$more" ]; then                                 # 2) 뒤 두 단계
+    cand="$anchor/…/$last2/$last1"
+    _split_chars "$cand"; if [ "$_W" -le "$max" ]; then _OUT=$cand; return; fi
+  fi
+  if [ -n "$head" ]; then pre="$anchor/…/"; else pre="$anchor/"; fi
+  if [ -n "$head" ]; then                                 # 3) 마지막 단계
+    cand="$pre$last1"
+    _split_chars "$cand"; if [ "$_W" -le "$max" ]; then _OUT=$cand; return; fi
+  fi
+  _split_chars "$pre"                                     # 4) 마지막 단계 가운데 생략
+  local avail=$((max - _W)); [ "$avail" -lt 8 ] && avail=8
+  _mid_trunc "$last1" "$avail"
+  _OUT="$pre$_OUT"
+}
+
+# 맥은 한글 파일명을 자모 분해형(NFD: ㅈ+ㅔ)으로 저장한다. 그대로 자르면 글자가
+# 쪼개지고 폭도 두 배로 잡힌다 → 비ASCII가 있을 때만 완성형(NFC)으로 바꾼다.
+# (iconv의 UTF-8-MAC은 맥 전용. 리눅스 경로는 원래 완성형이라 할 필요가 없다.)
+_has_nonascii() { local LC_ALL=C; case "$1" in *[$'\x80'-$'\xff']*) return 0 ;; esac; return 1; }
+case "$OSTYPE" in
+  darwin*)
+    if _has_nonascii "$path"; then
+      nfc=$(printf '%s' "$path" | iconv -f UTF-8-MAC -t UTF-8 2>/dev/null) && [ -n "$nfc" ] && path=$nfc
+    fi ;;
+esac
+_shorten_path "$path" "$PATH_MAX_W"; path=$_OUT
 
 # ── 호스트 / OS 계정 ──────────────────────────────────────────────────────
 host="${HOSTNAME:-$(hostname 2>/dev/null)}"
