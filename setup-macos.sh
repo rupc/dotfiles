@@ -28,7 +28,8 @@ brew bundle --file="$DOTFILES_DIR/Brewfile"
 SKIP_PACKAGES=1 "$DOTFILES_DIR/setup-shell.sh"
 SKIP_PACKAGES=1 "$DOTFILES_DIR/setup-nvim.sh"
 # claude CLI는 brew가 아니라 공식 네이티브 설치라 SKIP_PACKAGES를 안 넘긴다
-"$DOTFILES_DIR/setup-claude.sh"
+# --global: 내 머신이라 ~/.claude 에 (기본값인 로컬 모드는 공용 서버용)
+"$DOTFILES_DIR/setup-claude.sh" --global
 
 # 4. mac 전용 마무리
 BREW_BIN="$(brew --prefix)/bin"

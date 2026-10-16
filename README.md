@@ -13,7 +13,8 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
 | 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` · linux: `./setup-linux.sh` |
 | 셸 환경만 (zsh/oh-my-zsh/CLI 툴) | `./setup-shell.sh` |
 | neovim 환경만 (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
-| Claude Code만 (CLI + `~/.claude` 설정/상태줄) | `./setup-claude.sh` |
+| Claude Code만 — 공용 서버 (설정·로그인을 저장소 **상위 디렉토리**에) | `./setup-claude.sh` · 다 쓰면 `./setup-claude.sh --reset` |
+| Claude Code만 — 내 머신 (`~/.claude`) | `./setup-claude.sh --global` |
 | 공용 머신, sudo 없음 | `SKIP_PACKAGES=1 ./setup-shell.sh` (또는 `setup-nvim.sh`) |
 | 컨테이너 | `containers/build.sh` → `containers/run.sh` ([상세](containers/README.md)) |
 | **지금 상태 확인** (아무것도 설치 안 함) | `./status.sh` (빠진 것만: `./status.sh --missing`) |
@@ -28,8 +29,12 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
   생략(사유) / 실패(사유). 패키지 매니저 원본 출력은 `/tmp/setup-*.log`로 빠지고,
   생략·실패한 항목만 사유를 보고 조치한 뒤 재실행하면 그것만 마저 설치된다.
   (공용 로깅 헬퍼: `lib-report.sh`)
-- `setup-claude.sh`는 claude CLI(공식 네이티브 설치, sudo 불필요)와 `~/.claude` 설정을
-  배포한다. 핵심은 **상태줄** — 지금 어느 머신의 어느 경로에서, 어떤 계정·모델·effort로
+- `setup-claude.sh`는 claude CLI(공식 네이티브 설치, sudo 불필요)와 Claude 설정을
+  배포한다. 기본은 **로컬 모드** — 저장소 바로 위 디렉토리에만 쓴다(공용 서버용, 아래
+  [공용 서버에서 Claude Code](#공용-서버에서-claude-code-로컬-모드)). `--global`은 `~/.claude`에
+  배포한다 — `setup-macos.sh`/`setup-linux.sh`가 이걸로 부르고, 내 머신에서 직접 돌릴
+  때도 `--global`을 붙일 것(이 아래는 전역 모드 설명).
+  핵심은 **상태줄** — 지금 어느 머신의 어느 경로에서, 어떤 계정·모델·effort로
   돌고 있고, 이 대화창(`ctx`)과 결제 플랜(`5h`/`7d`)이 얼마나 남았는지가 한 줄로 뜬다.
   머신을 옮겨다니며 세션을 여러 개 띄우면 이게 없을 때 어느 창이 어디에 붙어 있는지
   헷갈린다. `~/.claude` 자체는 `0700`으로 잠근다(세션 기록이 들어있다).
@@ -41,6 +46,39 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
   AI 에이전트/런타임)별로 무엇이 있고 없는지, **없다면 왜 없는지**를 찍고 마지막에
   통계와 "사유별 묶음"을 보여준다. 사유 하나를 해결하면 몇 개가 같이 풀리는지가 보인다.
   (툴 목록/설명은 `lib-tools.sh`에서 setup-shell.sh와 공유)
+
+### 공용 서버에서 Claude Code (로컬 모드)
+
+한 리눅스 계정을 여러 사람이 같이 쓰는 서버에서는 `~/.claude`도 공용이라 내 설정·로그인·세션
+기록이 남의 것과 섞인다. 내 작업 디렉토리 안에 clone해서 `setup-claude.sh`를 돌리면 그
+디렉토리(저장소 바로 위)에만 쓰고, 다 쓴 뒤 `--reset` 한 번으로 원상복구된다.
+
+```sh
+cd /data/yongrae && git clone https://github.com/rupc/dotfiles && dotfiles/setup-claude.sh
+source /data/yongrae/claude-env.sh && claude        # 셸마다 source 한 번 (첫 실행 때 로그인)
+
+/data/yongrae/dotfiles/setup-claude.sh --reset      # 다 쓰면: 로그아웃 + 아래 세 개 삭제
+/data/yongrae/dotfiles/setup-claude.sh --reset --yes  # 확인 질문 없이
+```
+
+| 생기는 것 | 내용 |
+|---|---|
+| `yongrae/.claude/` | 설정·로그인·세션 기록 (`CLAUDE_CONFIG_DIR`가 가리키는 곳) |
+| `yongrae/.claude-setup/` | 서버에 없어서 받은 claude CLI(약 240MB)·jq, 셋업 로그 |
+| `yongrae/claude-env.sh` | `CLAUDE_CONFIG_DIR`·PATH 설정 (claude를 여기 받았으면 자동 업데이트도 끈다) |
+
+- 이 셋 밖(`~/.claude`, `~/.claude.json`, `~/.local`, `~/.config/chezmoi`, 셸 rc, apt)은
+  건드리지 않는다 — jq도 apt 대신 정적 바이너리를 받고, claude 설치기는 `HOME`을
+  `.claude-setup/home`으로 바꿔 돌린다. 그래서 `--reset`만으로 원래대로 돌아간다.
+  저장소(`dotfiles/`)는 남으니 완전히 치우려면 그것도 지울 것.
+- `source` 없이 그냥 `claude`를 치면 그 계정 공용 `~/.claude`(남의 로그인일 수 있음)를 쓴다.
+- 같은 리눅스 계정 사용자는 `yongrae/.claude`의 로그인 토큰도 읽을 수 있다(`0700`은 다른
+  uid만 막는다) — 다 쓰면 바로 `--reset`. 로그아웃이 서버 쪽 세션까지 끊는지는 확인하지
+  않았으니, 확실히 하려면 claude.ai 계정 설정에서도 정리할 것.
+- 작업은 `yongrae/` 바로 아래가 아니라 그 안의 저장소에서 — `yongrae/`에서 열면 설정
+  디렉토리와 프로젝트 `.claude/`가 같은 곳이 된다.
+- 경로에 공백·따옴표 등 특수문자가 있으면 셋업을 거부한다(상태줄 명령이 셸을 거친다).
+- 저장소가 홈 바로 아래(`~/dotfiles`)면 상위가 곧 홈이라 전역 모드로 돈다(`--reset`은 거부).
 
 ## 컨테이너 devbox
 

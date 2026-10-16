@@ -39,7 +39,7 @@ sudo usermod -aG docker "$USER" || true
 # 2. 셸 환경 (CLI 툴 설치 포함) + neovim 환경 (에디터 패키지 설치 포함) + Claude Code
 "$DOTFILES_DIR/setup-shell.sh"
 "$DOTFILES_DIR/setup-nvim.sh"
-"$DOTFILES_DIR/setup-claude.sh"
+"$DOTFILES_DIR/setup-claude.sh" --global   # 내 머신 → ~/.claude (기본 로컬 모드는 공용 서버용)
 
 # 3. nvm + node LTS (apt node는 구버전이라 nvm 경유)
 if [ ! -s "$HOME/.nvm/nvm.sh" ]; then

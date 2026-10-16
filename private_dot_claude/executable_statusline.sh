@@ -21,8 +21,10 @@
 #   cost{}, context_window, exceeds_200k_tokens, rate_limits{}, vim{mode} 등.
 # 호스트와 OS 계정은 JSON에 없으므로 시스템에서 직접 읽는다.
 # Claude 로그인 계정은 ~/.claude.json 의 oauthAccount 에 들어있다.
+# (CLAUDE_CONFIG_DIR로 띄운 세션이면 $CLAUDE_CONFIG_DIR/.claude.json — setup-claude.sh 로컬 모드)
 #
 # 배포: chezmoi (private_dot_claude/executable_statusline.sh -> ~/.claude/statusline.sh)
+#       로컬 모드는 setup-claude.sh가 <상위 디렉토리>/.claude/statusline.sh 로 복사
 # 연결: ~/.claude/settings.json 의 statusLine.command 가 이 파일을 가리킨다.
 # 출력은 한 줄. 이 스크립트가 실패해도 상태줄만 비고 세션은 멀쩡하다.
 # mac 기본 bash 3.2에서도 도는 문법만 쓴다 (연관배열·${var^^} 같은 건 금지).
@@ -165,8 +167,9 @@ user="${USER:-$(id -un 2>/dev/null)}"
 
 # ── Claude 로그인 계정 ────────────────────────────────────────────────────
 account=""
-if have_jq && [ -r "$HOME/.claude.json" ]; then
-  account=$(jq -r '.oauthAccount.emailAddress // empty' "$HOME/.claude.json" 2>/dev/null)
+claude_json="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
+if have_jq && [ -r "$claude_json" ]; then
+  account=$(jq -r '.oauthAccount.emailAddress // empty' "$claude_json" 2>/dev/null)
 fi
 
 # ── git 브랜치 (저장소 안일 때만, * = 커밋 안 한 변경 있음) ───────────────
