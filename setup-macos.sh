@@ -4,6 +4,7 @@
 # 부분 셋업만 원하면: setup-shell.sh (셸만) / setup-nvim.sh (에디터만)
 #
 # 사용법: git clone https://github.com/rupc/dotfiles ~/work/dotfiles && ~/work/dotfiles/setup-macos.sh
+# 새 맥 전체 절차(옛 맥에서 챙길 것, 권한 허용 같은 수동 단계 포함): README-macos.md
 # ============================================================================
 set -euo pipefail
 

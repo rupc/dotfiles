@@ -65,10 +65,10 @@ cask "kitty"     # 그래프 인라인 렌더링 지원 터미널
 cask "font-jetbrains-mono-nerd-font"
 cask "font-d2coding-nerd-font"   # 한글 코딩 폰트 (D2Coding + 글리프)
 
-# --- mac 앱 중 설정을 이 저장소가 배포하는 것 (첫 실행 때 권한 허용 — README 체크리스트) ---
+# --- mac 앱 중 설정을 이 저장소가 배포하는 것 (첫 실행 때 권한 허용 — README-macos.md 체크리스트) ---
 # Karabiner·Rectangle은 Brewfile.apps에 있다 (옛 맥에 DMG/pkg로 깔려 있어 여기 두면
 # 재실행 때 "이미 있음"으로 brew bundle이 실패하고 set -e가 셋업 전체를 멈춘다)
-cask "iterm2"        # 주 터미널 — 프로필은 README대로 내보내기/가져오기 (공개 저장소라 plist는 안 올림)
+cask "iterm2"        # 주 터미널 — 프로필은 README-macos.md대로 내보내기/가져오기 (공개 저장소라 plist는 안 올림)
 cask "hammerspoon"   # PPT/Word/Finder 자동화 (~/.hammerspoon)
 cask "linearmouse"   # 마우스 가속·스크롤 방향 (~/.config/linearmouse)
 
