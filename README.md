@@ -50,6 +50,7 @@ macOS / Linux 겸용 dotfiles. [chezmoi](https://chezmoi.io) 형식(`dot_`, `pri
 | Karabiner-Elements | 앱 한 번 실행 → 드라이버(시스템 확장) 허용, 입력 모니터링 허용 | 허용 전에도 한/영은 된다(hidutil 층). 다만 키를 *뗄 때* 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어간다 |
 | 입력 소스 | 시스템 설정 → 키보드 → 입력 소스 → 편집 → + 한국어 2벌식 | 한/영 키 자체는 셋업이 맞춰 둔다 |
 | 손쉬운 사용 권한 | Hammerspoon · LinearMouse · Rectangle · BetterDisplay — 첫 실행 안내대로 | |
+| 전체 디스크 접근 | Cardinal(파일 이름 즉시 검색, Cmd+Shift+Space) | 안 주면 보호된 폴더는 검색에서 빠진다 |
 | iTerm2 Claude Code 연동 | iTerm2의 Install Claude Code Integration | **셋업 다음에** — 셋업이 `~/.claude/settings.json`을 덮어 훅이 지워진다. 셋업을 다시 돌렸으면 연동도 다시 |
 | 로그인 | `gh auth login` → `gh auth setup-git` · `claude` · Slack·카카오톡 등 | |
 | git 신원 | `git config --global user.name "…"` · `user.email "…"` | |

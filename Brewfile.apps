@@ -10,6 +10,10 @@
 cask "karabiner-elements"  # 한/영 즉시 전환 + Windows식 단축키 — 첫 실행 때 드라이버·입력 모니터링 허용
 cask "rectangle"           # 창 배치 단축키
 
+# 파일 이름 즉시 검색 (Windows Everything 대체, Spotlight는 느려서) — 창 토글 Cmd+Shift+Space
+# 첫 실행 때 "전체 디스크 접근" 허용 필요. 오픈소스(MIT)·Apple 공증·네트워크 연결 없음 (2026-11 확인)
+cask "cardinal-search"
+
 # 폰트
 cask "font-pretendard"     # 한글 UI/문서용
 
