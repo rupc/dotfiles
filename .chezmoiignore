@@ -11,3 +11,8 @@ lib-tools.sh
 status.sh
 containers
 .dockerignore
+{{- if ne .chezmoi.os "darwin" }}
+# mac 전용 — setup-macos.sh가 배포 (Karabiner 키 매핑, 로그인 때 hidutil 거는 LaunchAgent)
+Library
+.config/karabiner
+{{- end }}

@@ -73,6 +73,29 @@ if [ -x "$TS_APP_CLI" ] && [ ! -e "$BREW_BIN/tailscale" ]; then
     chmod +x "$BREW_BIN/tailscale"
 fi
 
+# 한/영 전환 — 오른쪽 Command(외장 Varmilo는 오른쪽 Alt·한/영 키)
+# 세 층이고, 위층이 없으면 아래층이 받는다:
+#   1) Karabiner [hanyeong] 규칙: F18을 *누르는 순간* select_input_source로 직접 전환한다.
+#      macOS 단축키는 키를 *뗄 때* 전환돼서, 한/영을 떼기 전에 다음 글자를 치면 그 글자가
+#      이전 언어로 들어간다 ("가끔 한/영이 씹힘" — 2026-11 실측, 실사용 94회 중 29%).
+#      Shift가 눌린 채여도 전환된다 (단축키는 수정키가 정확히 없어야만 걸린다).
+#   2) LaunchAgent(hidutil): Karabiner 없이도 오른쪽 Command = F18. 로그인마다 다시 건다.
+#      이 매핑은 Karabiner 가상 키보드에도 걸린다 — Karabiner 규칙에서 right_command 금지.
+#   3) 시스템 단축키 60(이전 입력 소스 선택) = F18 — 1)이 없을 때 2)를 받아 전환한다.
+# Karabiner GUI에서 설정을 바꿨으면 먼저 되담을 것 (안 그러면 여기서 repo 내용으로 덮인다):
+#   chezmoi re-add ~/.config/karabiner/karabiner.json
+KEYMAP_PLIST="$HOME/Library/LaunchAgents/local.keymap.right-command-f18.plist"
+chezmoi apply --force --source "$DOTFILES_DIR" "$HOME/.config/karabiner" "$KEYMAP_PLIST"
+# 다시 로드해서 지금 바로 건다. 끄려면:
+#   launchctl bootout gui/$(id -u) "$KEYMAP_PLIST" && hidutil property --set '{"UserKeyMapping":[]}'
+launchctl bootout "gui/$(id -u)" "$KEYMAP_PLIST" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$KEYMAP_PLIST" 2>/dev/null \
+    || echo "경고: 한/영 LaunchAgent 로드 실패 — 다시 로그인하면 걸린다"
+# 단축키 60 = F18(키코드 79), 수정키 없음. activateSettings가 로그아웃 없이 반영한다.
+defaults write com.apple.symbolichotkeys AppleSymbolicHotKeys -dict-add 60 \
+    '<dict><key>enabled</key><true/><key>value</key><dict><key>parameters</key><array><integer>65535</integer><integer>79</integer><integer>0</integer></array><key>type</key><string>standard</string></dict></dict>'
+/System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+
 echo ""
 echo "완료! 새 터미널을 열면 적용됩니다."
 echo "docker를 쓰려면: colima start   (로그인 시 자동 시작: brew services start colima)"
