@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.linearmouse.app/0.11.4",
+  "schemes": [
+    {
+      "if": {
+        "device": {
+          "category": "mouse"
+        }
+      },
+      "scrolling": {
+        "modifiers": {
+          "vertical": {
+            "control": {
+              "type": "pinchZoom"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "category": "mouse"
+        },
+        "app": "com.google.Chrome"
+      },
+      "scrolling": {
+        "modifiers": {
+          "vertical": {
+            "control": {
+              "type": "zoom"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "category": "mouse"
+        },
+        "app": "com.microsoft.Powerpoint"
+      },
+      "scrolling": {
+        "modifiers": {
+          "vertical": {
+            "command": {
+              "type": "pinchZoom"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "device": {
+          "category": "mouse"
+        },
+        "app": "com.vmware.fusion"
+      },
+      "scrolling": {
+        "modifiers": {
+          "vertical": {
+            "control": {
+              "type": "auto"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
