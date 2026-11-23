@@ -84,8 +84,10 @@ fi
 #   3) 시스템 단축키 60(이전 입력 소스 선택) = F18 — 1)이 없을 때 2)를 받아 전환한다.
 # Karabiner GUI에서 설정을 바꿨으면 먼저 되담을 것 (안 그러면 여기서 repo 내용으로 덮인다):
 #   chezmoi re-add ~/.config/karabiner/karabiner.json
+# kitty.conf도 여기서 같이 배포한다 — 컴포넌트 스크립트(셸/nvim/claude)는 자기 영역만 apply한다.
 KEYMAP_PLIST="$HOME/Library/LaunchAgents/local.keymap.right-command-f18.plist"
-chezmoi apply --force --source "$DOTFILES_DIR" "$HOME/.config/karabiner" "$KEYMAP_PLIST"
+chezmoi apply --force --source "$DOTFILES_DIR" \
+    "$HOME/.config/karabiner" "$KEYMAP_PLIST" "$HOME/.config/kitty"
 # 다시 로드해서 지금 바로 건다. 끄려면:
 #   launchctl bootout gui/$(id -u) "$KEYMAP_PLIST" && hidutil property --set '{"UserKeyMapping":[]}'
 launchctl bootout "gui/$(id -u)" "$KEYMAP_PLIST" 2>/dev/null || true

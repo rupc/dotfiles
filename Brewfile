@@ -51,6 +51,12 @@ brew "fd"        # find 대체
 brew "ripgrep"   # grep 대체 (rg)
 brew "zoxide"    # 스마트 디렉토리 점프 (z)
 
+# 에디터 보조 — setup-nvim.sh가 쓰지만 setup-macos.sh는 SKIP_PACKAGES=1로 부르므로
+# 여기 없으면 새 맥에 영영 안 깔린다
+brew "shfmt"     # bash-language-server의 포매터
+brew "poppler"   # nvim에서 PDF 보기 (pdftotext/pdftoppm)
+brew "taplo"     # TOML LSP
+
 # 노트북(ipynb in nvim) — molten-nvim 이미지 렌더링용
 brew "imagemagick"
 cask "kitty"     # 그래프 인라인 렌더링 지원 터미널
