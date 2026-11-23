@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  오른쪽 Command → F18 (한/영 키) — 로그인할 때마다 hidutil로 다시 건다.
+  Karabiner가 꺼져 있거나 아직 권한을 안 받은 새 맥에서도 한/영이 되게 하는 바닥 층이다.
+  F18은 시스템 단축키 60(이전 입력 소스)에 묶여 있다 — setup-macos.sh가 설정.
+  주의: 이 매핑은 Karabiner의 가상 키보드에도 걸리므로 Karabiner 규칙에서 right_command를
+  내보내면 다시 한/영이 된다 — Karabiner에서는 left_command만 쓸 것.
+  끄려면: launchctl bootout 으로 이 에이전트를 내리고, hidutil 의 UserKeyMapping 을 빈 배열로
+          다시 설정한다 (정확한 명령은 setup-macos.sh 의 한/영 섹션 주석).
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.keymap.right-command-f18</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/hidutil</string>
+        <string>property</string>
+        <string>--set</string>
+        <string>{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x7000000e7,"HIDKeyboardModifierMappingDst":0x70000006d}]}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

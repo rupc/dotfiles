@@ -2,6 +2,11 @@
 
 macOS / Linux 겸용 dotfiles. [chezmoi](https://chezmoi.io) 형식(`dot_`, `private_`, `executable_` 접두사)으로 관리.
 
+## 맥북 셋업
+
+새 맥북을 지금 맥과 같은 환경으로 세우는 절차(옛 맥에서 챙길 것, 새 맥에서 칠 명령, 수동
+체크리스트, `setup-macos.sh`가 하는 일)는 **[README-macos.md](README-macos.md)**.
+
 ## 셋업
 
 ```sh
@@ -10,7 +15,7 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
 
 | 시나리오 | 커맨드 |
 |---|---|
-| 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` · linux: `./setup-linux.sh` |
+| 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` ([새 맥 절차](README-macos.md)) · linux: `./setup-linux.sh` |
 | 셸 환경만 (zsh/oh-my-zsh/CLI 툴) | `./setup-shell.sh` |
 | neovim 환경만 (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
 | Claude Code만 — 공용 서버 (설정·로그인을 저장소 **상위 디렉토리**에) | `./setup-claude.sh` · 다 쓰면 `./setup-claude.sh --reset` |
@@ -132,8 +137,12 @@ kitty에서 `nvim notebook.ipynb` → `,mi`(커널 선택: `nvim-python`) → **
 | 시스템 모니터링 | htop · btop · ncdu · duf · glances · mactop/asitop(mac) |
 | 파일 탐색/검색 | tree · eza(ls) · bat(cat) · fd(find) · ripgrep(grep) · zoxide |
 | 텍스트/데이터 | jq · yq · git-delta · hexyl |
-| 워크플로우 | tmux · lazygit · direnv · entr · hyperfine · tldr · shellcheck · thefuck(mac only) |
-| 네트워크/컨테이너 | httpie · mtr · lazydocker · dive · k9s |
+| 워크플로우 | tmux · lazygit · direnv · entr · hyperfine · tldr · shellcheck · watch · navi · broot · yazi · thefuck(mac only) |
+| 네트워크/컨테이너 | httpie · mtr · rsync(mac: 최신판) · lazydocker · dive · k9s |
+| 모던 CLI 2세대 | fastfetch(새 터미널 스플래시) · onefetch · vivid · procs · dust · sd · gping · doggo · glow · bandwhich · cmatrix · genact |
+| 에디터 보조 | shfmt · poppler(PDF) · taplo(TOML LSP) · imagemagick · kitty(노트북 그래프) |
+| LaTeX (mac) | texlive · biber · latexindent · texlab · Skim(SyncTeX 역검색) · Libertine/Biolinum O 폰트 |
+| 저장장치 (mac) | smartmontools(smartctl) · fio |
 
 ## 셸 인터랙티브 환경
 
@@ -141,7 +150,8 @@ zshrc가 전부 "설치되어 있을 때만" 로드하므로 일부가 없어도
 
 - **zsh 플러그인**(번들): zsh-autosuggestions(→로 수락) · zsh-syntax-highlighting ·
   fzf-tab(탭 완성을 fzf 팝업으로) · zsh-history-substring-search(↑/↓) ·
-  zsh-completions · forgit(`ga`/`glo`/`gd` 등 git을 fzf로) · zsh-better-npm-completion
+  zsh-completions · forgit(`ga`/`glo`/`gd` 등 git을 fzf로) · zsh-better-npm-completion ·
+  you-should-use(별칭이 있는 커맨드를 길게 치면 알려줌)
 - **oh-my-zsh 내장**: git(`gst`/`gco`/`gcmsg`) · dirhistory(Alt+←/→) · extract(`x`) ·
   autojump(`j`) · kubectl(`k`/`kgp`) · history/emoji/encode64
 - **훅 로드 툴**: pure(프롬프트) · zoxide(`z`) ·

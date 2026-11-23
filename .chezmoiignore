@@ -1,5 +1,5 @@
-README.md
-Brewfile
+README*.md
+Brewfile*
 setup-macos.sh
 setup-linux.sh
 setup-shell.sh
@@ -11,3 +11,10 @@ lib-tools.sh
 status.sh
 containers
 .dockerignore
+{{- if ne .chezmoi.os "darwin" }}
+# mac 전용 — setup-macos.sh가 배포 (키·마우스 앱 설정, 로그인 때 hidutil 거는 LaunchAgent)
+Library
+.config/karabiner
+.config/linearmouse
+.hammerspoon
+{{- end }}

@@ -325,7 +325,9 @@ done
 # --- 런타임/컨테이너 -------------------------------------------------------
 category "런타임/컨테이너" "${SETUP_ALL}"
 have node && yes_ "node" "$(node --version 2>/dev/null)" || no_ "node" "nvm으로 설치 (${SETUP_ALL})"
-[ -s "$HOME/.nvm/nvm.sh" ] && yes_ "nvm" || no_ "nvm" "${SETUP_ALL} 미실행"
+# mac은 brew가 nvm.sh를 $HOMEBREW_PREFIX/opt/nvm 에 둔다 (~/.nvm은 작업 디렉토리일 뿐)
+{ [ -s "$HOME/.nvm/nvm.sh" ] || [ -s "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/nvm/nvm.sh" ]; } \
+    && yes_ "nvm" || no_ "nvm" "${SETUP_ALL} 미실행"
 if have docker; then
     yes_ "docker" "$(docker --version 2>/dev/null | cut -d' ' -f3 | tr -d ,)"
     docker compose version >/dev/null 2>&1 && yes_ "docker compose" \
@@ -350,14 +352,31 @@ fi
 if [ "$OS" = "mac" ]; then
     category "mac 전용" "setup-macos.sh"
     if have brew; then
-        BREW_MISS=$(brew bundle check --file="$DOTFILES_DIR/Brewfile" --verbose 2>/dev/null \
-            | sed -n 's/^Missing formula: //p;s/^Missing cask: //p' | tr '\n' ' ')
+        # --no-upgrade: 구버전은 "있음"으로 친다. 출력 형식이 brew 버전마다 다르다:
+        #   예전 "Missing formula: X" / 지금 "→ Formula X needs to be installed." (stderr로 나온다)
+        BREW_MISS=$(HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" \
+            --verbose --no-upgrade 2>&1 \
+            | sed -nE 's/^(Missing (formula|cask): |→ (Formula|Cask) )([^ ]+).*/\4/p' | tr '\n' ' ')
         [ -z "${BREW_MISS// /}" ] && yes_ "Brewfile" "전부 설치됨" \
             || no_ "Brewfile" "미설치:${BREW_MISS} — brew bundle --file=Brewfile"
     else
         no_ "Brewfile" "brew 없음"
     fi
     have tailscale && yes_ "tailscale CLI" || no_ "tailscale CLI" "Tailscale.app 설치 후 setup-macos.sh 실행"
+    # 한/영 전환 세 층 (setup-macos.sh 주석 참고)
+    [ -d /Applications/Karabiner-Elements.app ] && yes_ "Karabiner-Elements" \
+        || no_ "Karabiner-Elements" "brew bundle --file=Brewfile"
+    grep -q '\[hanyeong\]' "$HOME/.config/karabiner/karabiner.json" 2>/dev/null \
+        && yes_ "한/영 Karabiner 규칙" "누르는 순간 전환" || no_ "한/영 Karabiner 규칙" "setup-macos.sh 미실행"
+    [ -f "$HOME/Library/LaunchAgents/local.keymap.right-command-f18.plist" ] \
+        && yes_ "한/영 hidutil LaunchAgent" "오른쪽 Command = F18" \
+        || no_ "한/영 hidutil LaunchAgent" "setup-macos.sh 미실행"
+    [ "$(defaults export com.apple.symbolichotkeys - 2>/dev/null \
+        | plutil -extract AppleSymbolicHotKeys.60.value.parameters.1 raw - 2>/dev/null)" = "79" ] \
+        && yes_ "한/영 단축키(F18)" || no_ "한/영 단축키(F18)" "setup-macos.sh 미실행"
+    defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -q '2SetKorean' \
+        && yes_ "한국어 2벌식 입력 소스" \
+        || no_ "한국어 2벌식 입력 소스" "수동: 시스템 설정 → 키보드 → 입력 소스 → 편집 → + 한국어 2벌식"
 fi
 
 # --- 통계 (맨 마지막) ------------------------------------------------------

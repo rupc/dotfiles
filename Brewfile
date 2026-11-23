@@ -51,12 +51,31 @@ brew "fd"        # find 대체
 brew "ripgrep"   # grep 대체 (rg)
 brew "zoxide"    # 스마트 디렉토리 점프 (z)
 
+# 에디터 보조 — setup-nvim.sh가 쓰지만 setup-macos.sh는 SKIP_PACKAGES=1로 부르므로
+# 여기 없으면 새 맥에 영영 안 깔린다
+brew "shfmt"     # bash-language-server의 포매터
+brew "poppler"   # nvim에서 PDF 보기 (pdftotext/pdftoppm)
+brew "taplo"     # TOML LSP
+
 # 노트북(ipynb in nvim) — molten-nvim 이미지 렌더링용
 brew "imagemagick"
 cask "kitty"     # 그래프 인라인 렌더링 지원 터미널
 
 # 터미널 아이콘 글리프 (eza --icons, 프롬프트 심볼) — 터미널 폰트로 지정해야 적용됨
 cask "font-jetbrains-mono-nerd-font"
+cask "font-d2coding-nerd-font"   # 한글 코딩 폰트 (D2Coding + 글리프)
+
+# --- mac 앱 중 설정을 이 저장소가 배포하는 것 (첫 실행 때 권한 허용 — README-macos.md 체크리스트) ---
+# Karabiner·Rectangle은 Brewfile.apps에 있다 (옛 맥에 DMG/pkg로 깔려 있어 여기 두면
+# 재실행 때 "이미 있음"으로 brew bundle이 실패하고 set -e가 셋업 전체를 멈춘다)
+cask "iterm2"        # 주 터미널 — 프로필은 README-macos.md대로 내보내기/가져오기 (공개 저장소라 plist는 안 올림)
+cask "hammerspoon"   # PPT/Word/Finder 자동화 (~/.hammerspoon)
+cask "linearmouse"   # 마우스 가속·스크롤 방향 (~/.config/linearmouse)
+
+# 미디어 · 로컬 LLM · 파이썬 툴 설치기
+brew "ffmpeg"
+brew "ollama"        # 로컬 LLM (ollama serve / brew services start ollama)
+brew "uv"            # 파이썬 툴은 uv tool install로 (pyhwp — setup-macos.sh)
 
 # 텍스트/데이터
 brew "jq"
@@ -70,7 +89,7 @@ brew "lazygit"
 brew "direnv"
 brew "entr"
 brew "hyperfine"
-brew "tldr"
+brew "tlrc"      # tldr 공식 클라이언트(Rust) — homebrew-core에서 tldr formula가 빠졌다. 명령은 그대로 tldr
 brew "shellcheck"
 brew "watch"     # 리눅스는 procps에 기본 탑재 — mac만 설치가 필요할 뿐 공용 툴
 brew "navi"      # Ctrl-G 커맨드 치트시트
