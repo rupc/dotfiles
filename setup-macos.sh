@@ -43,6 +43,27 @@ mkdir -p "$HOME/.nvm"
 mkdir -p "$HOME/.docker/cli-plugins"
 ln -sf "$BREW_BIN/docker-compose" "$HOME/.docker/cli-plugins/docker-compose"
 
+# Dock 아이콘 튀기기(주의 끌기 바운스) 끄기
+# Slack/메일 등이 알림을 띄울 때 독 아이콘이 계속 위아래로 튀는 동작이다.
+# 알림 자체는 그대로 오고(배지·배너·알림센터) 튀는 애니메이션만 사라진다.
+# 되돌리려면: defaults delete com.apple.dock no-bouncing && killall Dock
+# 앱 실행 시 한 번 튀는 것까지 없애려면 launchanim 도 false 로 (실행 피드백이 사라진다)
+if [ "$(defaults read com.apple.dock no-bouncing 2>/dev/null)" != "1" ]; then
+    defaults write com.apple.dock no-bouncing -bool true
+    killall Dock 2>/dev/null || true
+fi
+
+# 논문용 폰트 Linux Libertine O / Linux Biolinum O (ACM acmart 본문·제목 폰트)
+# TeX Live에 OTF가 들어 있지만 TeX 트리 안에만 있어서 Keynote·Word·matplotlib 같은 앱과
+# XeLaTeX의 이름 검색(\setmainfont{Linux Libertine O})에서는 안 보인다 → 사용자 폰트로 복사.
+# brew cask(font-linux-libertine)는 Libertine TTF뿐이고 패밀리 이름도 달라서("O" 없음) 쓰지 않는다.
+# 심링크가 아니라 복사인 이유: Cellar 경로는 texlive 버전이 바뀌면 사라진다.
+LIBERTINE_OTF="$("$BREW_BIN/kpsewhich" LinLibertine_R.otf 2>/dev/null || true)"
+if [ -n "$LIBERTINE_OTF" ] && [ ! -e "$HOME/Library/Fonts/LinLibertine_R.otf" ]; then
+    mkdir -p "$HOME/Library/Fonts"
+    cp -n "$(dirname "$LIBERTINE_OTF")"/Lin{Libertine,Biolinum}_*.otf "$HOME/Library/Fonts/"
+fi
+
 # Tailscale: DMG로 설치한 앱의 내장 CLI를 PATH에 노출
 # (심링크는 번들 식별 검사에 걸려서 안 됨 — 원본 경로로 exec하는 래퍼 사용.
 #  brew tailscale을 설치하면 데몬이 중복되므로 앱 설치와 병행 금지)
