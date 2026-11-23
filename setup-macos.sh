@@ -70,11 +70,14 @@ set_default com.apple.finder ShowStatusBar -bool true
 set_default com.apple.finder FXPreferredViewStyle -string Nlsv
 case "$CHANGED" in *com.apple.dock*) killall Dock 2>/dev/null || true ;; esac
 case "$CHANGED" in *com.apple.finder*) killall Finder 2>/dev/null || true ;; esac
-# 트랙패드 탭하여 클릭·이동 속도 3, 자연스러운 스크롤 끔, 다크 모드 — 다시 로그인해야 전부 반영된다
+# 트랙패드 탭하여 클릭·이동 속도 3, 마우스 이동 속도 3, 자연스러운 스크롤 끔(트랙패드·마우스 공통),
+# 다크 모드 — 다시 로그인해야 전부 반영된다.
+# 세·네 손가락 쓸기, 꼬집기, 클릭 세기는 옛 맥도 macOS 기본값이라 따로 쓰지 않는다.
 set_default com.apple.AppleMultitouchTrackpad Clicking -bool true
 set_default com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1
 set_default -g com.apple.trackpad.scaling -float 3
+set_default -g com.apple.mouse.scaling -float 3
 set_default -g com.apple.swipescrolldirection -bool false
 set_default -g AppleInterfaceStyle -string Dark
 # Rectangle(창 배치): 옛 맥 설정 — 처음 한 번만. 이미 설정이 있으면 건드리지 않는다.

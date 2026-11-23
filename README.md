@@ -190,7 +190,7 @@ kitty에서 `nvim notebook.ipynb` → `,mi`(커널 선택: `nvim-python`) → **
 | Hammerspoon (`~/.hammerspoon`) | PPT 축소판 확대·리본 단축키, Finder → iTerm2, Word/PPT 평문 붙여넣기 |
 | LinearMouse · kitty · git 전역 ignore | 설정 파일 그대로 |
 | Rectangle | 옛 맥 설정을 처음 한 번만 (`defaults`) |
-| macOS | Dock 자동 숨김·크기, 튀기기 끔 · Finder 경로/상태 막대·목록 보기 · 탭하여 클릭 · 자연스러운 스크롤 끔 · 다크 모드 |
+| macOS | Dock 자동 숨김·크기, 튀기기 끔 · Finder 경로/상태 막대·목록 보기 · 트랙패드 탭하여 클릭·속도 3 · 마우스 속도 3 · 자연스러운 스크롤 끔 · 다크 모드 (제스처·클릭 세기는 macOS 기본값 그대로) |
 | 앱 | `Brewfile`(셋업에 필요한 것, 실패하면 멈춤) · `Brewfile.apps`(일상 앱, 맨 끝, 실패해도 계속) |
 
 앱 GUI에서 설정을 바꾸면 셋업을 다시 돌리기 전에 `chezmoi re-add <파일>`로 되담을 것 —
