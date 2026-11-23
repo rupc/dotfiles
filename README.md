@@ -38,7 +38,8 @@ macOS / Linux 겸용 dotfiles. [chezmoi](https://chezmoi.io) 형식(`dot_`, `pri
    ```
    Homebrew 설치 단계에서 비밀번호와 Enter를 한 번 묻는다. texlive(~5GB) 때문에 오래 걸린다.
    중간에 멈추면 원인을 고치고 그대로 다시 실행(멱등). 마지막 GUI 앱 설치(`Brewfile.apps`)는
-   실패해도 셋업을 멈추지 않는다.
+   실패해도 셋업을 멈추지 않는다. 다만 그 단계에서 pkg로 깔리는 앱(Karabiner·Zoom 등)이
+   비밀번호를 한 번 더 묻는다 — texlive 받는 동안 자리를 비웠다면 그 프롬프트에서 기다리고 있다.
 5. 아래 체크리스트.
 6. 로그아웃 후 다시 로그인 (트랙패드·다크 모드·입력 소스 반영) → `~/work/dotfiles/status.sh --missing`.
 
