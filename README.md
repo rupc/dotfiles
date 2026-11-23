@@ -184,7 +184,7 @@ kitty에서 `nvim notebook.ipynb` → `,mi`(커널 선택: `nvim-python`) → **
 
 | 대상 | 배포/설정 |
 |---|---|
-| 한/영 (오른쪽 Command, 외장 Varmilo는 오른쪽 Alt·한/영 키) | Karabiner 규칙이 **누르는 순간** 전환 → 없으면 로그인 때 hidutil LaunchAgent가 오른쪽 Command를 F18로 → 시스템 단축키 60(F18)이 전환. macOS 단축키만 쓰면 키를 뗄 때 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어간다 |
+| 한/영 (오른쪽 Command, 외장 Varmilo는 오른쪽 Alt·한/영 키) | 시스템 단축키 60(F18)이 전환하고, Karabiner 규칙이 한/영을 **누르는 순간** F18을 눌렀다-뗀 것으로 보내 즉시 전환되게 한다 (Karabiner가 없으면 로그인 때 hidutil LaunchAgent가 오른쪽 Command를 F18로). macOS 단축키만 쓰면 키를 뗄 때 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어간다 |
 | Karabiner (`~/.config/karabiner`) | 위 한/영 + Windows식 단축키(`WinKeys-min` 프로필) |
 | Hammerspoon (`~/.hammerspoon`) | PPT 축소판 확대·리본 단축키, Finder → iTerm2, Word/PPT 평문 붙여넣기 |
 | LinearMouse · kitty · git 전역 ignore | 설정 파일 그대로 |

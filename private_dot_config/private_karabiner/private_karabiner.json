@@ -4,33 +4,27 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "[hanyeong] 한/영(F18) → 누르는 순간 입력 소스 직접 전환 (macOS 단축키는 뗄 때 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어감)",
+                        "description": "[hanyeong] 한/영(F18) → 누르는 순간 F18 탭을 보내 macOS 단축키가 즉시 전환 (select_input_source는 한글 입력기에서 메뉴바만 바뀌고 앱 입력은 안 바뀌는 경우가 있어 안 씀)",
                         "manipulators": [
                             {
                                 "type": "basic",
                                 "from": {
                                     "key_code": "f18",
                                     "modifiers": {
+                                        "mandatory": [
+                                            "shift"
+                                        ],
                                         "optional": [
-                                            "any"
+                                            "caps_lock"
                                         ]
                                     }
                                 },
-                                "conditions": [
-                                    {
-                                        "type": "input_source_if",
-                                        "input_sources": [
-                                            {
-                                                "language": "^ko$"
-                                            }
-                                        ]
-                                    }
-                                ],
                                 "to": [
                                     {
-                                        "select_input_source": {
-                                            "input_source_id": "^com\\.apple\\.keylayout\\.ABC$"
-                                        }
+                                        "key_code": "f18"
+                                    },
+                                    {
+                                        "key_code": "vk_none"
                                     }
                                 ]
                             },
@@ -46,9 +40,10 @@
                                 },
                                 "to": [
                                     {
-                                        "select_input_source": {
-                                            "input_source_id": "^com\\.apple\\.inputmethod\\.Korean\\.2SetKorean$"
-                                        }
+                                        "key_code": "f18"
+                                    },
+                                    {
+                                        "key_code": "vk_none"
                                     }
                                 ]
                             }
