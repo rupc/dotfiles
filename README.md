@@ -2,6 +2,71 @@
 
 macOS / Linux 겸용 dotfiles. [chezmoi](https://chezmoi.io) 형식(`dot_`, `private_`, `executable_` 접두사)으로 관리.
 
+## 새 맥으로 옮기기
+
+이 저장소 하나로 맥을 다시 세운다. 단 **공개 저장소**라 비밀·사내 정보(ssh, git 신원,
+앱 설정 plist 통째)는 올리지 않는다 — 그것들은 1단계대로 사적인 경로(AirDrop·USB)로 옮긴다.
+
+### 1. 옛 맥에서 (끄기 전에)
+
+1. 앱 GUI에서 바꾼 설정을 저장소로 되담고 push:
+   `chezmoi re-add ~/.config/karabiner/karabiner.json ~/.config/linearmouse/linearmouse.json`
+   (Hammerspoon lua를 고쳤다면 `~/.hammerspoon/*.lua`도).
+   `~/.claude/settings.json`을 되담을 때는 **`hooks`를 빼고** — iTerm2가 넣은 것이라
+   공용 서버에 배포되면 이벤트마다 실패한다.
+2. 저장소에 없는 것 챙기기:
+
+   | 무엇 | 방법 |
+   |---|---|
+   | `~/.ssh/` (키 + config) | 폴더째 복사 → 새 맥에서 `chmod 700 ~/.ssh && chmod 600 ~/.ssh/id_*` |
+   | iTerm2 프로필·설정 | `defaults export com.googlecode.iterm2 ~/iterm2.plist` |
+   | Claude Code 스킬 | `~/.claude/skills/` 폴더 |
+   | git 신원 | `git config --global user.name` / `user.email` 값 |
+   | ollama 모델 | `ollama list`로 이름 적어 두기 (새 맥에서 `ollama pull`) |
+
+   VS Code는 Settings Sync가 켜져 있으면 확장·설정이 계정으로 따라온다.
+
+### 2. 새 맥에서
+
+1. macOS 업데이트, Apple ID 로그인 (App Store 앱용).
+2. `xcode-select --install` — git이 여기 들어 있다. 창이 뜨면 "설치".
+3. iTerm2 설정 넣기 (iTerm2가 실행 중이 아닐 때 — 아직 안 깔려 있어도 된다):
+   `defaults import com.googlecode.iterm2 ~/iterm2.plist`
+4. 전체 셋업:
+   ```sh
+   git clone https://github.com/rupc/dotfiles ~/work/dotfiles && ~/work/dotfiles/setup-macos.sh
+   ```
+   Homebrew 설치 단계에서 비밀번호와 Enter를 한 번 묻는다. texlive(~5GB) 때문에 오래 걸린다.
+   중간에 멈추면 원인을 고치고 그대로 다시 실행(멱등). 마지막 GUI 앱 설치(`Brewfile.apps`)는
+   실패해도 셋업을 멈추지 않는다.
+5. 아래 체크리스트.
+6. 로그아웃 후 다시 로그인 (트랙패드·다크 모드·입력 소스 반영) → `~/work/dotfiles/status.sh --missing`.
+
+### 수동 체크리스트 (스크립트가 못 하는 것)
+
+| 항목 | 할 일 | 주의 |
+|---|---|---|
+| Karabiner-Elements | 앱 한 번 실행 → 드라이버(시스템 확장) 허용, 입력 모니터링 허용 | 허용 전에도 한/영은 된다(hidutil 층). 다만 키를 *뗄 때* 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어간다 |
+| 입력 소스 | 시스템 설정 → 키보드 → 입력 소스 → 편집 → + 한국어 2벌식 | 한/영 키 자체는 셋업이 맞춰 둔다 |
+| 손쉬운 사용 권한 | Hammerspoon · LinearMouse · Rectangle · BetterDisplay — 첫 실행 안내대로 | |
+| iTerm2 Claude Code 연동 | iTerm2의 Install Claude Code Integration | **셋업 다음에** — 셋업이 `~/.claude/settings.json`을 덮어 훅이 지워진다. 셋업을 다시 돌렸으면 연동도 다시 |
+| 로그인 | `gh auth login` → `gh auth setup-git` · `claude` · Slack·카카오톡 등 | |
+| git 신원 | `git config --global user.name "…"` · `user.email "…"` | |
+| docker | `colima start` (로그인 때 자동: `brew services start colima`) | |
+| Claude Code 플러그인 | `/plugin`으로 pptx-deck-plugin · tweenkit 다시 설치 | |
+| App Store 앱 | Word · Excel · PowerPoint · Outlook · OneNote · OneDrive · Slack · KakaoTalk · Tailscale · 한컴 HWP Viewer · Polaris Office · ExcalidrawZ | Tailscale은 App Store판 — `setup-macos.sh`를 한 번 더 돌리면 `tailscale` CLI가 잡힌다 |
+| 직접 받는 앱 | 한컴오피스 HWP(라이선스, 휴먼명조 폰트 포함) · VMware Fusion · Logi Options(구버전, 새 기기면 `brew install --cask logi-options+`) · Codex 앱 · 4X-Link | Homebrew cask가 없거나 폐기됨 |
+| AI 에이전트 CLI | codex · openclaw(게이트웨이 LaunchAgent 포함) · hermes | 각 공식 설치법으로 |
+| 은행 보안 플러그인 | AhnLab ASTx · TouchEn nxKey 등 | 은행 사이트가 요구할 때 깔리게 둔다 |
+
+### 옛 맥에서 `setup-macos.sh`를 다시 돌린다면
+
+- 먼저 한 번: `brew uninstall tldr && brew install tlrc` — Homebrew에서 tldr formula가
+  빠졌고 tlrc가 같은 `tldr` 명령을 준다. 둘이 같은 실행 파일을 두고 부딪히면 `brew bundle`이
+  실패할 수 있고, 그러면 `set -e`로 셋업이 거기서 멈춘다.
+- `Brewfile.apps`는 손으로 깔아 둔 앱마다 "already an App" 실패를 찍는다 — 이미 있다는 뜻이라 무시.
+- iTerm2 Claude Code 연동이 지워지니 다시 설치.
+
 ## 셋업
 
 ```sh
@@ -10,7 +75,7 @@ git clone https://github.com/rupc/dotfiles ~/work/dotfiles && cd ~/work/dotfiles
 
 | 시나리오 | 커맨드 |
 |---|---|
-| 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` · linux: `./setup-linux.sh` |
+| 전체 셋업 (셸+에디터+런타임+docker) | mac: `./setup-macos.sh` ([새 맥 절차](#새-맥으로-옮기기)) · linux: `./setup-linux.sh` |
 | 셸 환경만 (zsh/oh-my-zsh/CLI 툴) | `./setup-shell.sh` |
 | neovim 환경만 (vimrc/플러그인/LSP/노트북) | `./setup-nvim.sh` |
 | Claude Code만 — 공용 서버 (설정·로그인을 저장소 **상위 디렉토리**에) | `./setup-claude.sh` · 다 쓰면 `./setup-claude.sh --reset` |
@@ -113,6 +178,21 @@ molten-nvim + image.nvim + jupytext. **그래프 인라인은 kitty 터미널 �
 kitty에서 `nvim notebook.ipynb` → `,mi`(커널 선택: `nvim-python`) → **Ctrl+Enter**로
 셀 실행(결과·그래프 인라인). `,ml`=현재 줄, `,mr`=선택 실행, `,mo`/`,md`=출력 보기/삭제.
 저장하면 jupytext가 .ipynb로 재변환.
+
+## macOS 앱·설정 (setup-macos.sh)
+
+| 대상 | 배포/설정 |
+|---|---|
+| 한/영 (오른쪽 Command, 외장 Varmilo는 오른쪽 Alt·한/영 키) | Karabiner 규칙이 **누르는 순간** 전환 → 없으면 로그인 때 hidutil LaunchAgent가 오른쪽 Command를 F18로 → 시스템 단축키 60(F18)이 전환. macOS 단축키만 쓰면 키를 뗄 때 전환돼서 빠르게 치면 첫 글자가 이전 언어로 들어간다 |
+| Karabiner (`~/.config/karabiner`) | 위 한/영 + Windows식 단축키(`WinKeys-min` 프로필) |
+| Hammerspoon (`~/.hammerspoon`) | PPT 축소판 확대·리본 단축키, Finder → iTerm2, Word/PPT 평문 붙여넣기 |
+| LinearMouse · kitty · git 전역 ignore | 설정 파일 그대로 |
+| Rectangle | 옛 맥 설정을 처음 한 번만 (`defaults`) |
+| macOS | Dock 자동 숨김·크기, 튀기기 끔 · Finder 경로/상태 막대·목록 보기 · 탭하여 클릭 · 자연스러운 스크롤 끔 · 다크 모드 |
+| 앱 | `Brewfile`(셋업에 필요한 것, 실패하면 멈춤) · `Brewfile.apps`(일상 앱, 맨 끝, 실패해도 계속) |
+
+앱 GUI에서 설정을 바꾸면 셋업을 다시 돌리기 전에 `chezmoi re-add <파일>`로 되담을 것 —
+셋업은 저장소 내용으로 덮어쓴다(`--force`).
 
 ## 구조
 
