@@ -76,7 +76,7 @@ brew "lazygit"
 brew "direnv"
 brew "entr"
 brew "hyperfine"
-brew "tldr"
+brew "tlrc"      # tldr 공식 클라이언트(Rust) — homebrew-core에서 tldr formula가 빠졌다. 명령은 그대로 tldr
 brew "shellcheck"
 brew "watch"     # 리눅스는 procps에 기본 탑재 — mac만 설치가 필요할 뿐 공용 툴
 brew "navi"      # Ctrl-G 커맨드 치트시트

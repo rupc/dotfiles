@@ -87,6 +87,15 @@ tool_cmd() {
     esac
 }
 
+# brew formula 이름이 툴 이름과 다른 것 (mac 설치·확인용; apt 쪽은 툴 이름 그대로)
+#   tldr: homebrew-core가 tldr formula를 내리고 공식 Rust 클라이언트 tlrc로 대체 (명령은 tldr)
+brew_pkg() {
+    case "$1" in
+        tldr) echo "tlrc" ;;
+        *)    echo "$1" ;;
+    esac
+}
+
 # 요약/상태 출력의 한 줄 설명 (lib-report.sh가 훅으로 호출) — "이게 뭐였더라"를 없애기 위한 것
 describe() {
     case "$1" in
@@ -118,7 +127,7 @@ describe() {
     direnv)     echo "디렉토리별 환경변수 자동 로드 (.envrc)" ;;
     entr)       echo "파일 변경을 감지해 명령 재실행" ;;
     hyperfine)  echo "명령 실행시간 벤치마크 — 통계까지" ;;
-    tldr)       echo "man 요약판 — 실전 예제 위주" ;;
+    tldr|tlrc)  echo "man 요약판 — 실전 예제 위주" ;;
     shellcheck) echo "셸 스크립트 정적 분석" ;;
     httpie)     echo "읽기 좋은 HTTP 클라이언트 (http)" ;;
     mtr)        echo "traceroute+ping — 실시간 경로 진단" ;;

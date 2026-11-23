@@ -76,6 +76,7 @@ if [ "$PKG_OK" = "0" ]; then
 elif [ "$OS" = "mac" ]; then
     MISSING=()
     for pkg in chezmoi fd ripgrep git-delta watch "${SHELL_TOOLS_COMMON[@]}"; do
+        pkg=$(brew_pkg "$pkg")
         if brew list --versions "$pkg" >/dev/null 2>&1; then already "$pkg"; else MISSING+=("$pkg"); fi
     done
     if [ "${#MISSING[@]}" -gt 0 ]; then
